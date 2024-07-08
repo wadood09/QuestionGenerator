@@ -6,6 +6,7 @@ namespace QuestionGenerator.Core.Application.Interfaces.Repositories
     public interface IOptionRepository
     {
         Task<Option> AddAsync(Option option);
+        Task<IEnumerable<Option>> AddRangeAsync(IEnumerable<Option> options);
         Task<Option> GetAsync(int id);
         Task<Option> GetAsync(Expression<Func<Option, bool>> exp);
         Task<ICollection<Option>> GetAllAsync(Expression<Func<Option, bool>> exp);

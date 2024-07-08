@@ -22,6 +22,12 @@ namespace QuestionGenerator.Infrastructure.Repositories
             return option;
         }
 
+        public async Task<IEnumerable<Option>> AddRangeAsync(IEnumerable<Option> options)
+        {
+            await _context.Options.AddRangeAsync(options);
+            return options;
+        }
+
         public async Task<ICollection<Option>> GetAllAsync(Expression<Func<Option, bool>> exp)
         {
             var options = await _context.Options.Where(exp).ToListAsync();
