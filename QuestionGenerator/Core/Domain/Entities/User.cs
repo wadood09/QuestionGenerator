@@ -6,7 +6,7 @@ namespace QuestionGenerator.Core.Domain.Entities
     public class User : Auditables
     {
         public string FirstName { get; set; } = default!;
-        public string LastName { get; set; } = default!;
+        public string LastName { get; set; }
         public string? GoogleId { get; set; }
         public string Email { get; set; } = default!;
         public string? PasswordHash { get; set; }

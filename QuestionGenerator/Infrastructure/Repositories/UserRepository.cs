@@ -42,13 +42,13 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public async Task<User> GetAsync(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Id == id);
             return user;
         }
 
         public async Task<User> GetAsync(Expression<Func<User, bool>> exp)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(exp);
+            var user = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(exp);
             return user;
         }
 

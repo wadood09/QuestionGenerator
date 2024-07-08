@@ -1,6 +1,9 @@
 ﻿namespace QuestionGenerator.Core.Domain.Enums
 {
-    public class DifficultyLevel
+    public enum DifficultyLevel
     {
+        Easy = 1,
+        Medium,
+        Hard
     }
 }

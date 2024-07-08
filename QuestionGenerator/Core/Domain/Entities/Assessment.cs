@@ -6,10 +6,13 @@ namespace QuestionGenerator.Core.Domain.Entities
     {
         public List<Question> Questions { get; set; } = [];
         public AssessmentType AssessmentType { get; set; }
+        public DifficultyLevel DifficultyLevel { get; set; }
         public int DocumentId { get; set; }
+        public int UserId { get; set; }
 
         #region Relationships
         public Document Document { get; set; }
+        public User User { get; set; }
         public List<RevisitedAssesment> RevistedAssesments { get; set; } = [];
 
         #endregion

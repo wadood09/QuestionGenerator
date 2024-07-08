@@ -6,5 +6,8 @@ namespace QuestionGenerator.Models.AssessmentModel
     {
         public int QuestionCount { get; set; }
         public AssessmentType AssessmentType { get; set; }
+        public bool AdvancedPrefences { get; set; }
+        public List<string> Prefences { get; set; }
+        public DifficultyLevel DifficultyLevel { get; set; }
     }
 }

@@ -12,9 +12,17 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddContext(builder.Configuration.GetConnectionString("QuestionGenString")!);
 
+builder.Services.AddAutoMapper(typeof(Program));
+
+builder.Services.AddRepositories();
+
+builder.Services.AddServices();
+
 builder.Services.Configure<StorageConfig>(builder.Configuration.GetSection("FileStorage"));
 
 builder.Services.Configure<OpenAiConfig>(builder.Configuration.GetSection("OpenAi"));
+
+builder.Services.Configure<GoogleAuthConfig>(builder.Configuration.GetSection("GoogleAuths"));
 
 
 

@@ -35,13 +35,19 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public async Task<Assessment> GetAsync(int id)
         {
-            var assessment = await _context.Assessments.FindAsync(id);
+            var assessment = await _context.Assessments
+                .Include(x => x.Document)
+                .Include(x => x.Questions).ThenInclude(q => q.Options)
+                .FirstOrDefaultAsync(x => x.Id == id);
             return assessment;
         }
 
         public async Task<Assessment> GetAsync(Expression<Func<Assessment, bool>> exp)
         {
-            var assessment = await _context.Assessments.FirstOrDefaultAsync(exp);
+            var assessment = await _context.Assessments
+                .Include(x => x.Document)
+                .Include(x => x.Questions).ThenInclude(q => q.Options)
+                .FirstOrDefaultAsync(exp);
             return assessment;
         }
 
