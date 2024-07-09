@@ -6,7 +6,7 @@ namespace QuestionGenerator.Core.Application.Interfaces.Repositories
     public interface IDocumentRepository
     {
         Task<Document> AddAsync(Document document);
-        Task<bool> ExistsAsync(string title);
+        Task<bool> ExistsAsync(int userId, string title);
         Task<Document> GetAsync(int id);
         Task<Document> GetAsync(Expression<Func<Document, bool>> exp);
         Task<ICollection<Document>> GetAllAsync(Expression<Func<Document, bool>> exp);

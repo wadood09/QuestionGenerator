@@ -22,9 +22,9 @@ namespace QuestionGenerator.Infrastructure.Repositories
             return document;
         }
 
-        public async Task<bool> ExistsAsync(string title)
+        public async Task<bool> ExistsAsync(int userId, string title)
         {
-            var exists = await _context.Documents.AnyAsync(x => title.Equals(x.Title, StringComparison.OrdinalIgnoreCase));
+            var exists = await _context.Documents.AnyAsync(x => title.Equals(x.Title, StringComparison.OrdinalIgnoreCase) && x.UserId == userId);
             return exists;
         }
 

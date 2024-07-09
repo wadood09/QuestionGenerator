@@ -18,6 +18,7 @@ namespace QuestionGenerator.Core.Application.Services
     public class AssessmentService : IAssessmentService
     {
         private readonly OpenAiConfig _openAiConfig;
+        private readonly StorageConfig _storageConfig;
         private readonly IAssessmentRepository _assessmentRepository;
         private readonly IQuestionRepository _questionRepository;
         private readonly IOptionRepository _optionRepository;
@@ -27,9 +28,10 @@ namespace QuestionGenerator.Core.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public AssessmentService(IOptions<OpenAiConfig> openAiConfig, IAssessmentRepository assessmentRepository, IUnitOfWork unitOfWork, IDocumentRepository documentRepository, IOptionRepository optionRepository, IQuestionRepository questionRepository, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IMapper mapper)
+        public AssessmentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IAssessmentRepository assessmentRepository, IUnitOfWork unitOfWork, IDocumentRepository documentRepository, IOptionRepository optionRepository, IQuestionRepository questionRepository, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IMapper mapper)
         {
             _openAiConfig = openAiConfig.Value;
+            _storageConfig = storageConfig.Value;
             _assessmentRepository = assessmentRepository;
             _unitOfWork = unitOfWork;
             _documentRepository = documentRepository;
@@ -64,7 +66,7 @@ namespace QuestionGenerator.Core.Application.Services
             }
 
             var openApi = new OpenAIAPI(_openAiConfig.ApiKey);
-            var documentContent = File.ReadAllLines($"C:\\Users\\WADOOD\\OneDrive\\Desktop\\QuestionGenerator\\QuestionGenerator\\Files\\{document.DocumentUrl}");
+            var documentContent = File.ReadAllLines($"{_storageConfig.Path}\\{document.DocumentUrl}");
             var prompt = GetPrompt(request.AssessmentType, request.QuestionCount, documentContent, request.DifficultyLevel, request.Prefences, request.AdvancedPrefences);
             var completionRequest = new CompletionRequest
             {
