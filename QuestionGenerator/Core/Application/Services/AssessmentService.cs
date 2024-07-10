@@ -66,7 +66,7 @@ namespace QuestionGenerator.Core.Application.Services
             }
 
             var openApi = new OpenAIAPI(_openAiConfig.ApiKey);
-            var documentContent = File.ReadAllLines($"{_storageConfig.Path}\\{document.DocumentUrl}");
+            var documentContent = File.ReadAllLines($"{_storageConfig.Path}\\Documents\\{document.DocumentUrl}");
             var prompt = GetPrompt(request.AssessmentType, request.QuestionCount, documentContent, request.DifficultyLevel, request.Prefences, request.AdvancedPrefences);
             var completionRequest = new CompletionRequest
             {
