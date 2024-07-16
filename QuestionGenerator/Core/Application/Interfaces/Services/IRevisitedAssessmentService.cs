@@ -1,6 +1,7 @@
 ﻿namespace QuestionGenerator.Core.Application.Interfaces.Services
 {
-    public class IRevisitedAssessmentService
+    public interface IRevisitedAssessmentService
     {
+        Task<Base>
     }
 }

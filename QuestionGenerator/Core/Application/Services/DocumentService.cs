@@ -153,9 +153,23 @@ namespace QuestionGenerator.Core.Application.Services
             throw new NotImplementedException();
         }
 
-        public Task<BaseResponse<DocumentResponse>> GetDocument(int id)
+        public async Task<BaseResponse<DocumentResponse>> GetDocument(int id)
         {
-            throw new NotImplementedException();
+            var document = await _documentRepository.GetAsync(id);
+            if(document == null)
+            {
+                return new BaseResponse<DocumentResponse>
+                {
+                    Message = "Document does not exists",
+                    Status = false
+                };
+            }
+
+            var response = 
+            return new BaseResponse<DocumentResponse>
+            {
+
+            }
         }
 
         public Task<BaseResponse<ICollection<DocumentResponse>>> GetDocumentsMyUser(int userId)

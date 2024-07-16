@@ -2,5 +2,7 @@
 {
     public class DocumentResponse
     {
+        public string Title { get; set; }
+
     }
 }
