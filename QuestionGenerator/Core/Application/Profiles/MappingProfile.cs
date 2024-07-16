@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using QuestionGenerator.Core.Application.Converter;
 using QuestionGenerator.Core.Domain.Entities;
+using QuestionGenerator.Core.Domain.Enums;
 using QuestionGenerator.Models.AssessmentModel;
 using QuestionGenerator.Models.OptionModel;
 using QuestionGenerator.Models.QuestionModel;
@@ -16,9 +18,11 @@ namespace QuestionGenerator.Core.Application.Profiles
             CreateMap<Question, QuestionResponse>();
 
             CreateMap<Assessment, AssessmentResponse>()
-                .ForMember(dest => dest.DocumentTitle, opt => opt.MapFrom(src => src.Document.Title));
+                .ForMember(dest => dest.DocumentTitle, opt => opt.MapFrom(src => src.Document.Title))
+                .ForMember(dest => dest.AssessmentType, opt => opt.ConvertUsing(new AssessmentTypeConverter(), src => src.AssessmentType));
 
-            CreateMap<Assessment, AssessmentsResponse>();
+            CreateMap<Assessment, AssessmentsResponse>()
+                .ForMember(dest => dest.AssessmentType, opt => opt.ConvertUsing(new AssessmentTypeConverter(), src => src.AssessmentType));
 
             CreateMap<User, UserResponse>()
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FirstName + " " + src.LastName))
