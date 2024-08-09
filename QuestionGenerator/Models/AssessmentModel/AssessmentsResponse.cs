@@ -1,5 +1,3 @@
-﻿using QuestionGenerator.Core.Domain.Enums;
-
 namespace QuestionGenerator.Models.AssessmentModel
 {
     public class AssessmentsResponse
