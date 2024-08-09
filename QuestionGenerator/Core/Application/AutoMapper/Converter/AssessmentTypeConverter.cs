@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using QuestionGenerator.Core.Domain.Enums;
 
-namespace QuestionGenerator.Core.Application.Converter
+namespace QuestionGenerator.Core.Application.AutoMapper.Converter
 {
     public class AssessmentTypeConverter : IValueConverter<AssessmentType, string>
     {

@@ -24,11 +24,12 @@ namespace QuestionGenerator.Core.Application.Services
         private readonly IOptionRepository _optionRepository;
         private readonly IDocumentRepository _documentRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IAssessmentSubmissionRepository _assessmentSubmissionRepository;
         private readonly IUserRepository _userRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public AssessmentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IAssessmentRepository assessmentRepository, IUnitOfWork unitOfWork, IDocumentRepository documentRepository, IOptionRepository optionRepository, IQuestionRepository questionRepository, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IMapper mapper)
+        public AssessmentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IAssessmentRepository assessmentRepository, IUnitOfWork unitOfWork, IDocumentRepository documentRepository, IOptionRepository optionRepository, IQuestionRepository questionRepository, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IMapper mapper, IAssessmentSubmissionRepository assessmentSubmissionRepository)
         {
             _openAiConfig = openAiConfig.Value;
             _storageConfig = storageConfig.Value;
@@ -40,6 +41,7 @@ namespace QuestionGenerator.Core.Application.Services
             _httpContextAccessor = httpContextAccessor;
             _userRepository = userRepository;
             _mapper = mapper;
+            _assessmentSubmissionRepository = assessmentSubmissionRepository;
         }
 
         public async Task<BaseResponse<AssessmentResponse>> TakeAssessment(int documentId, AssessmentRequest request)
@@ -56,7 +58,7 @@ namespace QuestionGenerator.Core.Application.Services
 
             var loginUserId = _httpContextAccessor.HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             var user = await _userRepository.GetAsync(int.Parse(loginUserId));
-            if(user == null)
+            if (user == null)
             {
                 return new BaseResponse<AssessmentResponse>
                 {
@@ -105,7 +107,7 @@ namespace QuestionGenerator.Core.Application.Services
         public async Task<BaseResponse<AssessmentResponse>> GetAssessment(int id)
         {
             var assessment = await _assessmentRepository.GetAsync(id);
-            if(assessment == null)
+            if (assessment == null)
             {
                 return new BaseResponse<AssessmentResponse>
                 {
@@ -126,7 +128,13 @@ namespace QuestionGenerator.Core.Application.Services
         public async Task<BaseResponse<ICollection<AssessmentsResponse>>> GetAssessmentsByDocument(int documentId)
         {
             var assessments = await _assessmentRepository.GetAllAsync(x => x.DocumentId == documentId);
-            var response = assessments.Select(_mapper.Map<AssessmentsResponse>).ToList();
+            var response = _mapper.Map<List<AssessmentsResponse>>(assessments);
+            await Task.WhenAll(response.Select(async x =>
+            {
+                var grade = await GetRecentGrade(x.Id);
+                x.RecentGrade = grade == null ? string.Empty : grade.ToString();
+            }));
+
             return new BaseResponse<ICollection<AssessmentsResponse>>
             {
                 Message = "List of assessments",
@@ -138,13 +146,35 @@ namespace QuestionGenerator.Core.Application.Services
         public async Task<BaseResponse<ICollection<AssessmentsResponse>>> GetAssessmentsByUser(int userId)
         {
             var assessments = await _assessmentRepository.GetAllAsync(x => x.UserId == userId);
-            var response = assessments.Select(_mapper.Map<AssessmentsResponse>).ToList();
+            var response = _mapper.Map<List<AssessmentsResponse>>(assessments);
+            await Task.WhenAll(response.Select(async x =>
+            {
+                var grade = await GetRecentGrade(x.Id);
+                x.RecentGrade = grade == null ? string.Empty : grade.ToString();
+            }));
+
             return new BaseResponse<ICollection<AssessmentsResponse>>
             {
                 Message = "List of assessments",
                 Status = true,
                 Value = response
             };
+        }
+
+        private async Task<double?> GetRecentGrade(int assessmentId)
+        {
+            var assesmentSubmissions = await _assessmentSubmissionRepository.GetAllAsync(r => r.AssessmentId == assessmentId);
+            var latestSubmission = assesmentSubmissions.Count != 0 ? assesmentSubmissions.OrderByDescending(r => r.DateCreated).First() : null;
+            if (latestSubmission == null) 
+                return null;
+            var questionsPassed = 0;
+            latestSubmission.Results.ForEach(x =>
+            {
+                if (x.Question.Answer == x.UserAnswer)
+                    questionsPassed++;
+            });
+            var grade = questionsPassed / latestSubmission.Results.Count * 100;
+            return grade;
         }
 
         private (List<Question>, List<Domain.Entities.Option>) GetQuestionsAndOptions(AssessmentType type, CompletionResult result, Assessment assessment, string loginUserId)

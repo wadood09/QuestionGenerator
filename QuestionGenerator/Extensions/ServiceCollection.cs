@@ -23,7 +23,7 @@ namespace QuestionGenerator.Extensions
                 .AddScoped<IFileRepository, FileRepository>()
                 .AddScoped<IOptionRepository, OptionRepository>()
                 .AddScoped<IQuestionRepository, QuestionRepository>()
-                .AddScoped<IRevisitedAssessmentRepository, RevisitedAssessmentRepository>()
+                .AddScoped<IAssessmentSubmissionRepository, AssessmentSubmissionRepository>()
                 .AddScoped<IRoleRepository, RoleRepository>()
                 .AddScoped<IUnitOfWork, UnitOfWork>()
                 .AddScoped<IUserRepository, UserRepository>();

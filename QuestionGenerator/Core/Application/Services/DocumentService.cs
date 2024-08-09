@@ -7,7 +7,6 @@ using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Application.Interfaces.Services;
 using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Models;
-using QuestionGenerator.Models.AssessmentModel;
 using QuestionGenerator.Models.DocumentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -19,13 +18,14 @@ namespace QuestionGenerator.Core.Application.Services
         private readonly OpenAiConfig _openAiConfig;
         private readonly StorageConfig _storageConfig;
         private readonly IDocumentRepository _documentRepository;
+        private readonly IAssessmentSubmissionRepository _assessmentSubmissionRepository;
         private readonly IUserRepository _userRepository;
         private readonly IFileRepository _fileRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-
-        public DocumentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IDocumentRepository documentRepository, IUserRepository userRepository, IHttpContextAccessor httpContextAccessor, IUnitOfWork unitOfWork, IMapper mapper, IFileRepository fileRepository)
+         
+        public DocumentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IDocumentRepository documentRepository, IUserRepository userRepository, IHttpContextAccessor httpContextAccessor, IUnitOfWork unitOfWork, IMapper mapper, IFileRepository fileRepository, IAssessmentSubmissionRepository assessmentSubmissionRepository)
         {
             _openAiConfig = openAiConfig.Value;
             _storageConfig = storageConfig.Value;
@@ -35,6 +35,7 @@ namespace QuestionGenerator.Core.Application.Services
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _fileRepository = fileRepository;
+            _assessmentSubmissionRepository = assessmentSubmissionRepository;
         }
 
         public async Task<BaseResponse> CreateDocument(DocumentRequest request)
@@ -148,9 +149,27 @@ namespace QuestionGenerator.Core.Application.Services
             };
         }
 
-        public Task<BaseResponse> DeleteDocument(int id)
+        public async Task<BaseResponse> DeleteDocument(int id)
         {
-            throw new NotImplementedException();
+            var document = await _documentRepository.GetAsync(id);
+            if (document == null)
+            {
+                return new BaseResponse
+                {
+                    Message = "Document not found",
+                    Status = false
+                };
+            }
+
+            _documentRepository.Remove(document);
+            await _unitOfWork.SaveAsync();
+
+            return new BaseResponse
+            {
+                Message = "Document has been deleted successfully",
+                Status = true
+            };
+
         }
 
         public async Task<BaseResponse<DocumentResponse>> GetDocument(int id)
@@ -165,19 +184,56 @@ namespace QuestionGenerator.Core.Application.Services
                 };
             }
 
-            var response = 
+            var response = _mapper.Map<DocumentResponse>(document);
+            await Task.WhenAll(response.Assessments.Select(async x =>
+            {
+                var revisitedAssessment = await _assessmentSubmissionRepository.GetAllAsync(r => r.AssessmentId == x.Id);
+                var recentGrade = revisitedAssessment.Count != 0 ? revisitedAssessment.OrderByDescending(r => r.DateCreated).First().AssessmentScore : 0;
+                x.RecentGrade = recentGrade;
+            }));
+
             return new BaseResponse<DocumentResponse>
             {
-
-            }
+                Status = true,
+                Message = "Document successfully found",
+                Value = response
+            };
         }
 
-        public Task<BaseResponse<ICollection<DocumentResponse>>> GetDocumentsMyUser(int userId)
+        public async Task<BaseResponse<DocumentResponse>> GetDocument(string title)
+        {
+            var document = await _documentRepository.GetAsync(x => x.Title == title);
+            if(document == null)
+            {
+                return new BaseResponse<DocumentResponse>
+                {
+                    Message = "Document does not exists",
+                    Status = false
+                };
+            }
+
+            var response = _mapper.Map<DocumentResponse>(document);
+            await Task.WhenAll(response.Assessments.Select(async x =>
+            {
+                var revisitedAssessment = await _assessmentSubmissionRepository.GetAllAsync(r => r.AssessmentId == x.Id);
+                var recentGrade = revisitedAssessment.Count != 0 ? revisitedAssessment.OrderByDescending(r => r.DateCreated).First().AssessmentScore : 0;
+                x.RecentGrade = recentGrade;
+            }));
+
+            return new BaseResponse<DocumentResponse>
+            {
+                Status = true,
+                Message = "Document successfully found",
+                Value = response
+            };
+        }
+
+        public Task<BaseResponse<ICollection<DocumentsResponse>>> GetDocumentsByUser(int userId)
         {
             throw new NotImplementedException();
         }
 
-        private string GetPrompt(string[] documentContent)
+        private static string GetPrompt(string[] documentContent)
         {
             return "Please generate a JSON list of strings representing the table of contents or chapters or headings of the following document:\r\n\r\n" +
                 $"---\r\n{documentContent}\r\n---\r\n\r\n" +

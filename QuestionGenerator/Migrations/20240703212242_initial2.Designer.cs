@@ -369,13 +369,13 @@ namespace QuestionGenerator.Migrations
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.RevisitedAssesment", b =>
                 {
                     b.HasOne("QuestionGenerator.Core.Domain.Entities.Assessment", "Assessment")
-                        .WithMany("RevistedAssesments")
+                        .WithMany("AssessmentSubmissions")
                         .HasForeignKey("AssessmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("QuestionGenerator.Core.Domain.Entities.Document", "Document")
-                        .WithMany("RevistedAssesments")
+                        .WithMany("AssessmentSubmissions")
                         .HasForeignKey("DocumentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -400,14 +400,14 @@ namespace QuestionGenerator.Migrations
                 {
                     b.Navigation("Questions");
 
-                    b.Navigation("RevistedAssesments");
+                    b.Navigation("AssessmentSubmissions");
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Document", b =>
                 {
                     b.Navigation("Assessments");
 
-                    b.Navigation("RevistedAssesments");
+                    b.Navigation("AssessmentSubmissions");
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Question", b =>

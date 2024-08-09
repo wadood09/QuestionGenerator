@@ -13,7 +13,7 @@ namespace QuestionGenerator.Core.Domain.Entities
         #region Relationships
         public Document Document { get; set; }
         public User User { get; set; }
-        public List<RevisitedAssesment> RevistedAssesments { get; set; } = [];
+        public List<AssesmentSubmission> AssessmentSubmissions { get; set; } = [];
 
         #endregion
     }

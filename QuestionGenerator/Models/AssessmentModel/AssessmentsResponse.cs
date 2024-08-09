@@ -1,4 +1,4 @@
-namespace QuestionGenerator.Models.AssessmentModel
+﻿namespace QuestionGenerator.Models.AssessmentModel
 {
     public class AssessmentsResponse
     {
@@ -6,6 +6,6 @@ namespace QuestionGenerator.Models.AssessmentModel
         public string AssessmentType { get; set; }
         public DateTime DateCreated { get; set; }
         public int QuestionsCount { get; set; }
-
+        public string? RecentGrade { get; set; }
     }
 }

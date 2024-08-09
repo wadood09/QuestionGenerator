@@ -1,9 +1,9 @@
 ﻿namespace QuestionGenerator.Core.Domain.Entities
 {
-    public class RevisitedAssesment : Auditables
+    public class AssesmentSubmission : Auditables
     {
         public int AssessmentId { get; set; }
-        public double AssessmentScore { get; set; }
+        public List<QuestionResult> Results { get; set; } = [];
         public int DocumentId { get; set; }
         public int UserId { get; set; }
 

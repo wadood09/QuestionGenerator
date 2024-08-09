@@ -7,7 +7,7 @@ namespace QuestionGenerator.Core.Application.Interfaces.Services
     {
         Task<BaseResponse> CreateDocument(DocumentRequest request);
         Task<BaseResponse<DocumentResponse>> GetDocument(int id);
-        Task<BaseResponse<ICollection<DocumentResponse>>> GetDocumentsMyUser(int userId);
+        Task<BaseResponse<ICollection<DocumentsResponse>>> GetDocumentsByUser(int userId);
         Task<BaseResponse> DeleteDocument(int id);
     }
 }

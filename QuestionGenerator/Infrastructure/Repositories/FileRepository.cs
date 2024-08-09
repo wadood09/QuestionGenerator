@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using QuestionGenerator.Core.Application.Config;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
+using System.Net.Http;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace QuestionGenerator.Infrastructure.Repositories
@@ -8,10 +9,12 @@ namespace QuestionGenerator.Infrastructure.Repositories
     public class FileRepository : IFileRepository
     {
         private readonly StorageConfig _config;
+        private readonly HttpClient _httpClient;
 
-        public FileRepository(IOptions<StorageConfig> config)
+        public FileRepository(IOptions<StorageConfig> config, HttpClient httpClient)
         {
             _config = config.Value;
+            _httpClient = httpClient;
         }
 
         public async Task<string?> UploadAsync(IFormFile? file)
@@ -56,6 +59,31 @@ namespace QuestionGenerator.Infrastructure.Repositories
             }
 
             return newName;
+        }
+
+        public async Task<string?> SaveProfilePictureAsync(string imageUrl)
+        {
+            if (imageUrl == null)
+                return null;
+
+            var fileExtension = Path.GetExtension(imageUrl);
+            var fileName = $"{Guid.NewGuid().ToString("N").Substring(0, 6)}.{fileExtension}";
+            var folderPath = Path.Combine(_config.Path, "Images");
+            var filePath = Path.Combine(folderPath, fileName);
+
+            using (var response = await _httpClient.GetAsync(imageUrl))
+            {
+                if (response.IsSuccessStatusCode)
+                {
+                    var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                    await File.WriteAllBytesAsync(filePath, imageBytes);
+                    return filePath;
+                }
+                else
+                {
+                    return null;
+                }
+            }
         }
     }
 }

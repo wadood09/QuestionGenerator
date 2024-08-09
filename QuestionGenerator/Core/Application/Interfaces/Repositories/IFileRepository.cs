@@ -3,5 +3,6 @@
     public interface IFileRepository
     {
         Task<string?> UploadAsync(IFormFile? file);
+        Task<string?> SaveProfilePictureAsync(string imageUrl);
     }
 }

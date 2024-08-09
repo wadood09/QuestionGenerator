@@ -9,6 +9,7 @@
 
         #region Relationships
         public List<Option> Options { get; set; } = [];
+        public List<QuestionResult> Results { get; set; } = [];
         public Assessment Assessment { get; set; }
 
         #endregion
