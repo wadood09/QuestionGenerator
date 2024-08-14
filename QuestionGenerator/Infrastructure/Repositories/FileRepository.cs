@@ -77,7 +77,7 @@ namespace QuestionGenerator.Infrastructure.Repositories
                 {
                     var imageBytes = await response.Content.ReadAsByteArrayAsync();
                     await File.WriteAllBytesAsync(filePath, imageBytes);
-                    return filePath;
+                    return fileName;
                 }
                 else
                 {
