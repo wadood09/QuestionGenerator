@@ -53,7 +53,8 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public Assessment Remove(Assessment assessment)
         {
-            _context.Assessments.Remove(assessment);
+            assessment.IsDeleted = true;
+            _context.Assessments.Update(assessment);
             return assessment;
         }
 

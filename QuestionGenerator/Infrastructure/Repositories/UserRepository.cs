@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Mysqlx.Expr;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Infrastructure.Context;
@@ -25,6 +24,12 @@ namespace QuestionGenerator.Infrastructure.Repositories
         public async Task<bool> ExistsAsync(string email)
         {
             var exists = await _context.Users.AnyAsync(x => x.Email == email);
+            return exists;
+        }
+
+        public async Task<bool> ExistsAsync(Expression<Func<User, bool>> exp)
+        {
+            var exists = await _context.Users.AnyAsync(exp);
             return exists;
         }
 
@@ -54,7 +59,8 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public User Remove(User user)
         {
-            _context.Users.Remove(user);
+            user.IsDeleted = true;
+            _context.Users.Update(user);
             return user;
         }
 

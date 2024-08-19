@@ -53,7 +53,8 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public QuestionResult Remove(QuestionResult result)
         {
-            _context.Results.Remove(result);
+            result.IsDeleted = true;
+            _context.Results.Update(result);
             return result;
         }
 

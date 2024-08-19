@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Mysqlx.Expr;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Infrastructure.Context;
@@ -54,7 +53,8 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public Question Remove(Question question)
         {
-            _context.Questions.Remove(question);
+            question.IsDeleted = true;
+            _context.Questions.Update(question);
             return question;
         }
 

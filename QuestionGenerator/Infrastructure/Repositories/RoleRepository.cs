@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Mysqlx.Expr;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Infrastructure.Context;
@@ -48,7 +47,8 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public Role Remove(Role role)
         {
-            _context.Roles.Remove(role);
+            role.IsDeleted = true;
+            _context.Roles.Update(role);
             return role;
         }
 

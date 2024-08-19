@@ -7,6 +7,7 @@ namespace QuestionGenerator.Core.Application.Interfaces.Repositories
     {
         Task<User> AddAsync(User user);
         Task<bool> ExistsAsync(string email);
+        Task<bool> ExistsAsync(Expression<Func<User, bool>> exp);
         Task<User> GetAsync(int id);
         Task<User> GetAsync(Expression<Func<User, bool>> exp);
         Task<ICollection<User>> GetAllAsync(Expression<Func<User, bool>> exp);

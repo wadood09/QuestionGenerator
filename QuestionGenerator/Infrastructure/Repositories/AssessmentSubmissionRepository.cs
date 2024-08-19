@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Mysqlx.Expr;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Infrastructure.Context;
@@ -52,7 +51,8 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public AssesmentSubmission Remove(AssesmentSubmission assesment)
         {
-            _context.AssessmentSubmissions.Remove(assesment);
+            assesment.IsDeleted = true;
+            _context.AssessmentSubmissions.Update(assesment);
             return assesment;
         }
 

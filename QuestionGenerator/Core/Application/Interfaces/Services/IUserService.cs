@@ -7,9 +7,10 @@ namespace QuestionGenerator.Core.Application.Interfaces.Services
     {
         Task<BaseResponse> CreateUser(UserRequest request);
         Task<BaseResponse<UserResponse>> GetUser(int id);
-        Task<BaseResponse> UpdateUser(int id, UserRequest request);
+        Task<BaseResponse<UserResponse>> GetUserByToken(string token);
+        Task<BaseResponse<UserResponse>> GetUserByEmail(string email);
+        Task<BaseResponse> UpdateUser(int id, UpdateUserRequest request);
         Task<BaseResponse> RemoveUser(int id);
-        Task<LoginResponse> Login(LoginRequestModel model);
-
+        Task<BaseResponse> ResetPassword(string token, string newPassword);
     }
 }

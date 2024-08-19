@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Mysqlx.Expr;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Infrastructure.Context;
@@ -54,7 +53,8 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public Option Remove(Option option)
         {
-            _context.Options.Remove(option);
+            option.IsDeleted = true;
+            _context.Options.Update(option);
             return option;
         }
 

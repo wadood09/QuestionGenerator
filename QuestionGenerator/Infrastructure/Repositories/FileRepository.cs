@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using QuestionGenerator.Core.Application.Config;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
-using System.Net.Http;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace QuestionGenerator.Infrastructure.Repositories
 {

@@ -133,7 +133,7 @@ namespace QuestionGenerator.Core.Application.Services
             {
                 Title = request.Title,
                 CreatedBy = loginUserId.ToString(),
-                DateCreated = DateTime.Now,
+                DateCreated = DateTime.UtcNow,
                 DocumentUrl = documentUrl,
                 UserId = user.Id,
                 TableOfContentsJson = result.Completions[0].Text
@@ -187,9 +187,10 @@ namespace QuestionGenerator.Core.Application.Services
             var response = _mapper.Map<DocumentResponse>(document);
             await Task.WhenAll(response.Assessments.Select(async x =>
             {
-                var revisitedAssessment = await _assessmentSubmissionRepository.GetAllAsync(r => r.AssessmentId == x.Id);
-                var recentGrade = revisitedAssessment.Count != 0 ? revisitedAssessment.OrderByDescending(r => r.DateCreated).First().AssessmentScore : 0;
-                x.RecentGrade = recentGrade;
+                var revisitedAssessments = await _assessmentSubmissionRepository.GetAllAsync(r => r.AssessmentId == x.Id);
+                var recentAssessment = revisitedAssessments.OrderByDescending(r => r.DateCreated).First();
+                var recentGrade = revisitedAssessments.Count != 0 ? GetGrade(recentAssessment) : null;
+                x.RecentGrade = recentGrade != null ? $"{recentGrade}%" : "";
             }));
 
             return new BaseResponse<DocumentResponse>
@@ -215,9 +216,10 @@ namespace QuestionGenerator.Core.Application.Services
             var response = _mapper.Map<DocumentResponse>(document);
             await Task.WhenAll(response.Assessments.Select(async x =>
             {
-                var revisitedAssessment = await _assessmentSubmissionRepository.GetAllAsync(r => r.AssessmentId == x.Id);
-                var recentGrade = revisitedAssessment.Count != 0 ? revisitedAssessment.OrderByDescending(r => r.DateCreated).First().AssessmentScore : 0;
-                x.RecentGrade = recentGrade;
+                var revisitedAssessments = await _assessmentSubmissionRepository.GetAllAsync(r => r.AssessmentId == x.Id);
+                var recentAssessment = revisitedAssessments.OrderByDescending(r => r.DateCreated).First();
+                var recentGrade = revisitedAssessments.Count != 0 ? GetGrade(recentAssessment) : null;
+                x.RecentGrade = recentGrade != null ? $"{recentGrade}%" : "";
             }));
 
             return new BaseResponse<DocumentResponse>
@@ -228,9 +230,30 @@ namespace QuestionGenerator.Core.Application.Services
             };
         }
 
-        public Task<BaseResponse<ICollection<DocumentsResponse>>> GetDocumentsByUser(int userId)
+        public async Task<BaseResponse<ICollection<DocumentsResponse>>> GetDocumentsByUser(int userId)
         {
-            throw new NotImplementedException();
+            var documents = await _documentRepository.GetAllAsync(x => x.UserId == userId);
+            var response = _mapper.Map<List<DocumentsResponse>>(documents);
+            return new BaseResponse<ICollection<DocumentsResponse>>
+            {
+                Message = "Lists of documents",
+                Status = true,
+                Value = response
+            };
+        }
+
+        private static double? GetGrade(AssesmentSubmission assessment)
+        {
+            if (assessment == null)
+                return null;
+            var score = 0;
+            assessment.Results.ForEach(x =>
+            {
+                if (x.Question.Answer.Equals(x.UserAnswer))
+                    score++;
+            });
+            var percentage = score / assessment.Results.Count * 100;
+            return percentage;
         }
 
         private static string GetPrompt(string[] documentContent)

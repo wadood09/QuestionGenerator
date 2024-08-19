@@ -29,6 +29,7 @@ namespace QuestionGenerator.Core.Domain.Entities
         #region Relationships
         public Role Role { get; set; }
         public List<Document> Documents { get; set; } = [];
+        public List<Token> Tokens { get; set; } = [];
 
         #endregion
     }

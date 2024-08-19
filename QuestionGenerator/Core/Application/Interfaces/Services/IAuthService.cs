@@ -5,7 +5,8 @@ namespace QuestionGenerator.Core.Application.Interfaces.Services
 {
     public interface IAuthService
     {
-        Task<BaseResponse<UserResponse>> LoginAsync(LoginRequest request);
-        Task<BaseResponse<UserResponse>> VerifyGoogleTokenAsync(string idToken);
+        Task<LoginResponse> Login(LoginRequest model);
+        Task<BaseResponse<UserResponse>> VerifyGoogleToken(string idToken);
+        Task<BaseResponse> SendPasswordResetEmail(string email, string resetToken);
     }
 }

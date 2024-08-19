@@ -81,7 +81,7 @@ namespace QuestionGenerator.Core.Application.Services
             {
                 AssessmentType = request.AssessmentType,
                 CreatedBy = loginUserId,
-                DateCreated = DateTime.Now,
+                DateCreated = DateTime.UtcNow,
                 DocumentId = documentId,
                 UserId = user.Id,
             };
@@ -193,7 +193,7 @@ namespace QuestionGenerator.Core.Application.Services
                         AssessmentId = assessment.Id,
                         Assessment = assessment,
                         CreatedBy = loginUserId,
-                        DateCreated = DateTime.Now,
+                        DateCreated = DateTime.UtcNow,
                         Elucidation = item.Explanation
                     };
                     questions.Add(question);
@@ -203,7 +203,7 @@ namespace QuestionGenerator.Core.Application.Services
                         QuestionId = question.Id,
                         Question = question,
                         CreatedBy = loginUserId,
-                        DateCreated = DateTime.Now,
+                        DateCreated = DateTime.UtcNow,
                         OptionText = x
                     });
                     options.AddRange(questionOptions);
@@ -218,7 +218,7 @@ namespace QuestionGenerator.Core.Application.Services
                     {
                         AssessmentId = assessment.Id,
                         Assessment = assessment,
-                        DateCreated = DateTime.Now,
+                        DateCreated = DateTime.UtcNow,
                         CreatedBy = loginUserId,
                         Answer = item.Answer,
                         QuestionText = item.Statement,
@@ -236,7 +236,7 @@ namespace QuestionGenerator.Core.Application.Services
                     {
                         Assessment = assessment,
                         AssessmentId = assessment.Id,
-                        DateCreated = DateTime.Now,
+                        DateCreated = DateTime.UtcNow,
                         CreatedBy = loginUserId,
                         QuestionText = item.Sentence,
                         Answer = item.Answer
@@ -254,7 +254,7 @@ namespace QuestionGenerator.Core.Application.Services
                         AssessmentId = assessment.Id,
                         Assessment = assessment,
                         CreatedBy = loginUserId,
-                        DateCreated = DateTime.Now,
+                        DateCreated = DateTime.UtcNow,
                         QuestionText = item.Question,
                         Answer = item.Answer,
                         Elucidation = item.Explanation

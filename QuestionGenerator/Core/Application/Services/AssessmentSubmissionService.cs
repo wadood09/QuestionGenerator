@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace QuestionGenerator.Core.Application.Services
 {
-    public class RevisitedAssessmentService : IAssessmentSubmissionService
+    public class AssessmentSubmissionService : IAssessmentSubmissionService
     {
         private readonly IAssessmentRepository _assessmentRepository;
         private readonly IAssessmentSubmissionRepository _assessmentSubmissionRepository;
@@ -20,7 +20,7 @@ namespace QuestionGenerator.Core.Application.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUnitOfWork _unitOfWork;
 
-        public RevisitedAssessmentService(IAssessmentRepository assessmentRepository, IQuestionRepository questionRepository, IOptionRepository optionRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IAssessmentSubmissionRepository assessmentSubmissionRepository, IQuestionResultRepository questionResultRepository)
+        public AssessmentSubmissionService(IAssessmentRepository assessmentRepository, IQuestionRepository questionRepository, IOptionRepository optionRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IAssessmentSubmissionRepository assessmentSubmissionRepository, IQuestionResultRepository questionResultRepository)
         {
             _assessmentRepository = assessmentRepository;
             _questionRepository = questionRepository;
@@ -59,7 +59,7 @@ namespace QuestionGenerator.Core.Application.Services
             {
                 AssessmentId = assessment.Id,
                 CreatedBy = loginUserId,
-                DateCreated = DateTime.Now,
+                DateCreated = DateTime.UtcNow,
                 DocumentId = assessment.DocumentId,
                 UserId = user.Id
             };
@@ -98,7 +98,7 @@ namespace QuestionGenerator.Core.Application.Services
                     CreatedBy = loginUserId,
                     AssessmentSubmissionId = submission.Id,
                     AssesmentSubmission = submission,
-                    DateCreated = DateTime.Now,
+                    DateCreated = DateTime.UtcNow,
                     QuestionId = question.Id,
                     UserAnswer = userAnswer
                 });

@@ -9,12 +9,6 @@
         public string ConfirmPassword { get; set; }
     }
 
-    public class LoginRequestModel
-    {
-        public string Email { get; set; } = default!;
-        public string Password { get; set; } = default!;
-    }
-
     public class ChangePasswordRequest
     {
         public string Password { get; set; } = default!;

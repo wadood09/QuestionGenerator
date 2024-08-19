@@ -4,6 +4,7 @@ using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Models.AssessmentModel;
 using QuestionGenerator.Models.DocumentModel;
 using QuestionGenerator.Models.OptionModel;
+using QuestionGenerator.Models.TokenModel;
 using QuestionGenerator.Models.QuestionModel;
 using QuestionGenerator.Models.UserModel;
 

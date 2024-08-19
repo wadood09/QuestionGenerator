@@ -4,7 +4,8 @@ namespace QuestionGenerator.Core.Application.Interfaces.Services
 {
     public interface IIdentityService
     {
-        string GenerateToken(string key, string issuer, UserResponse user);
-        bool IsTokenValid(string key, string issuer, string token);
+        string GenerateAccessToken(string key, string issuer, string audience, UserResponse user);
+        string GenerateRefreshToken();
+        bool IsTokenValid(string key, string issuer, string audience, string token);
     }
 }
