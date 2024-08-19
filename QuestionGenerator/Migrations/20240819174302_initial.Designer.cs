@@ -11,8 +11,8 @@ using QuestionGenerator.Infrastructure.Context;
 namespace QuestionGenerator.Migrations
 {
     [DbContext(typeof(QuestionGeneratorContext))]
-    [Migration("20240703212242_initial2")]
-    partial class initial2
+    [Migration("20240819174302_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -22,13 +22,13 @@ namespace QuestionGenerator.Migrations
                 .HasAnnotation("ProductVersion", "8.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Assessment", b =>
+            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.AssesmentSubmission", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("AssessmentType")
+                    b.Property<int>("AssessmentId")
                         .HasColumnType("int");
 
                     b.Property<string>("CreatedBy")
@@ -50,11 +50,61 @@ namespace QuestionGenerator.Migrations
                     b.Property<string>("ModifiedBy")
                         .HasColumnType("longtext");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssessmentId");
+
+                    b.HasIndex("DocumentId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AssessmentSubmissions", (string)null);
+                });
+
+            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Assessment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("AssessmentType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("DifficultyLevel")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DocumentId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DocumentId");
 
-                    b.ToTable("Assessment", (string)null);
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Assessments", (string)null);
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Document", b =>
@@ -98,7 +148,7 @@ namespace QuestionGenerator.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Document", (string)null);
+                    b.ToTable("Documents", (string)null);
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Option", b =>
@@ -134,7 +184,7 @@ namespace QuestionGenerator.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Option", (string)null);
+                    b.ToTable("Options", (string)null);
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Question", b =>
@@ -177,20 +227,20 @@ namespace QuestionGenerator.Migrations
 
                     b.HasIndex("AssessmentId");
 
-                    b.ToTable("Question", (string)null);
+                    b.ToTable("Questions", (string)null);
                 });
 
-            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.RevisitedAssesment", b =>
+            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.QuestionResult", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("AssessmentId")
+                    b.Property<int>("AssesmentSubmissionId")
                         .HasColumnType("int");
 
-                    b.Property<double>("AssessmentScore")
-                        .HasColumnType("double");
+                    b.Property<int>("AssessmentSubmissionId")
+                        .HasColumnType("int");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
@@ -202,22 +252,26 @@ namespace QuestionGenerator.Migrations
                     b.Property<DateTime?>("DateModified")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("DocumentId")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("ModifiedBy")
                         .HasColumnType("longtext");
 
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserAnswer")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AssessmentId");
+                    b.HasIndex("AssesmentSubmissionId");
 
-                    b.HasIndex("DocumentId");
+                    b.HasIndex("QuestionId");
 
-                    b.ToTable("RevisitedAssesment", (string)null);
+                    b.ToTable("Results", (string)null);
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Role", b =>
@@ -248,7 +302,7 @@ namespace QuestionGenerator.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Role", (string)null);
+                    b.ToTable("Roles", (string)null);
 
                     b.HasData(
                         new
@@ -267,6 +321,48 @@ namespace QuestionGenerator.Migrations
                             IsDeleted = false,
                             Name = "Premium User"
                         });
+                });
+
+            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Token", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("Expires")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("TokenType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TokenValue")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Tokens", (string)null);
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.User", b =>
@@ -319,7 +415,34 @@ namespace QuestionGenerator.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("User", (string)null);
+                    b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.AssesmentSubmission", b =>
+                {
+                    b.HasOne("QuestionGenerator.Core.Domain.Entities.Assessment", "Assessment")
+                        .WithMany("AssessmentSubmissions")
+                        .HasForeignKey("AssessmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QuestionGenerator.Core.Domain.Entities.Document", "Document")
+                        .WithMany("AssessmentSubmissions")
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QuestionGenerator.Core.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Assessment");
+
+                    b.Navigation("Document");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Assessment", b =>
@@ -330,7 +453,15 @@ namespace QuestionGenerator.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("QuestionGenerator.Core.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Document");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Document", b =>
@@ -366,23 +497,34 @@ namespace QuestionGenerator.Migrations
                     b.Navigation("Assessment");
                 });
 
-            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.RevisitedAssesment", b =>
+            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.QuestionResult", b =>
                 {
-                    b.HasOne("QuestionGenerator.Core.Domain.Entities.Assessment", "Assessment")
-                        .WithMany("AssessmentSubmissions")
-                        .HasForeignKey("AssessmentId")
+                    b.HasOne("QuestionGenerator.Core.Domain.Entities.AssesmentSubmission", "AssesmentSubmission")
+                        .WithMany("Results")
+                        .HasForeignKey("AssesmentSubmissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("QuestionGenerator.Core.Domain.Entities.Document", "Document")
-                        .WithMany("AssessmentSubmissions")
-                        .HasForeignKey("DocumentId")
+                    b.HasOne("QuestionGenerator.Core.Domain.Entities.Question", "Question")
+                        .WithMany("Results")
+                        .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Assessment");
+                    b.Navigation("AssesmentSubmission");
 
-                    b.Navigation("Document");
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Token", b =>
+                {
+                    b.HasOne("QuestionGenerator.Core.Domain.Entities.User", "User")
+                        .WithMany("Tokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.User", b =>
@@ -396,23 +538,30 @@ namespace QuestionGenerator.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.AssesmentSubmission", b =>
+                {
+                    b.Navigation("Results");
+                });
+
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Assessment", b =>
                 {
-                    b.Navigation("Questions");
-
                     b.Navigation("AssessmentSubmissions");
+
+                    b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Document", b =>
                 {
-                    b.Navigation("Assessments");
-
                     b.Navigation("AssessmentSubmissions");
+
+                    b.Navigation("Assessments");
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Question", b =>
                 {
                     b.Navigation("Options");
+
+                    b.Navigation("Results");
                 });
 
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.Role", b =>
@@ -423,6 +572,8 @@ namespace QuestionGenerator.Migrations
             modelBuilder.Entity("QuestionGenerator.Core.Domain.Entities.User", b =>
                 {
                     b.Navigation("Documents");
+
+                    b.Navigation("Tokens");
                 });
 #pragma warning restore 612, 618
         }

@@ -3,12 +3,15 @@ using Microsoft.Extensions.Options;
 using OpenAI_API;
 using OpenAI_API.Completions;
 using QuestionGenerator.Core.Application.Config;
+using QuestionGenerator.Core.Application.Exceptions;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Application.Interfaces.Services;
 using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Core.Domain.Enums;
+using QuestionGenerator.Infrastructure.Repositories;
 using QuestionGenerator.Models;
 using QuestionGenerator.Models.AssessmentModel;
+using QuestionGenerator.Models.AssessmentSubmissionModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
@@ -20,6 +23,7 @@ namespace QuestionGenerator.Core.Application.Services
         private readonly OpenAiConfig _openAiConfig;
         private readonly StorageConfig _storageConfig;
         private readonly IAssessmentRepository _assessmentRepository;
+        private readonly IQuestionResultRepository _questionResultRepository;
         private readonly IQuestionRepository _questionRepository;
         private readonly IOptionRepository _optionRepository;
         private readonly IDocumentRepository _documentRepository;
@@ -29,7 +33,7 @@ namespace QuestionGenerator.Core.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public AssessmentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IAssessmentRepository assessmentRepository, IUnitOfWork unitOfWork, IDocumentRepository documentRepository, IOptionRepository optionRepository, IQuestionRepository questionRepository, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IMapper mapper, IAssessmentSubmissionRepository assessmentSubmissionRepository)
+        public AssessmentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IAssessmentRepository assessmentRepository, IUnitOfWork unitOfWork, IDocumentRepository documentRepository, IOptionRepository optionRepository, IQuestionRepository questionRepository, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IMapper mapper, IAssessmentSubmissionRepository assessmentSubmissionRepository, IQuestionResultRepository questionResultRepository)
         {
             _openAiConfig = openAiConfig.Value;
             _storageConfig = storageConfig.Value;
@@ -42,6 +46,7 @@ namespace QuestionGenerator.Core.Application.Services
             _userRepository = userRepository;
             _mapper = mapper;
             _assessmentSubmissionRepository = assessmentSubmissionRepository;
+            _questionResultRepository = questionResultRepository;
         }
 
         public async Task<BaseResponse<AssessmentResponse>> TakeAssessment(int documentId, AssessmentRequest request)
@@ -57,15 +62,7 @@ namespace QuestionGenerator.Core.Application.Services
             }
 
             var loginUserId = _httpContextAccessor.HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            var user = await _userRepository.GetAsync(int.Parse(loginUserId));
-            if (user == null)
-            {
-                return new BaseResponse<AssessmentResponse>
-                {
-                    Message = "User is not authenticated",
-                    Status = false
-                };
-            }
+            var user = await _userRepository.GetAsync(int.Parse(loginUserId ?? "0")) ?? throw new UnAuthenticatedUserException();
 
             var openApi = new OpenAIAPI(_openAiConfig.ApiKey);
             var documentContent = File.ReadAllLines($"{_storageConfig.Path}\\Documents\\{document.DocumentUrl}");
@@ -101,6 +98,85 @@ namespace QuestionGenerator.Core.Application.Services
                 Message = "Assessment created succesfully",
                 Status = true,
                 Value = assessmentResponse
+            };
+        }
+
+        public async Task<BaseResponse> SubmitAssessment(AssessmentSubmissionRequest request)
+        {
+            var assessment = await _assessmentRepository.GetAsync(request.AssessmentId);
+            if (assessment == null)
+            {
+                return new BaseResponse
+                {
+                    Message = "Assessment not found",
+                    Status = false
+                };
+            }
+
+            var loginUserId = _httpContextAccessor.HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            var user = await _userRepository.GetAsync(int.Parse(loginUserId));
+            if (user == null)
+            {
+                return new BaseResponse
+                {
+                    Message = "User is not authenticated",
+                    Status = false
+                };
+            }
+
+            var submission = new AssesmentSubmission
+            {
+                AssessmentId = assessment.Id,
+                CreatedBy = loginUserId,
+                DateCreated = DateTime.UtcNow,
+                DocumentId = assessment.DocumentId,
+                UserId = user.Id
+            };
+            await _assessmentSubmissionRepository.AddAsync(submission);
+
+            foreach (var item in request.QuestionAnswers)
+            {
+                var question = await _questionRepository.GetAsync(item.Key);
+                if (question == null)
+                {
+                    return new BaseResponse
+                    {
+                        Message = "Question not found",
+                        Status = false
+                    };
+                }
+
+                var userAnswer = item.Value;
+                if (assessment.AssessmentType == AssessmentType.MultipleChoice)
+                {
+                    var option = await _optionRepository.GetAsync(int.Parse(item.Value));
+                    if (option == null)
+                    {
+                        return new BaseResponse
+                        {
+                            Message = "Option not found",
+                            Status = false
+                        };
+                    }
+                    userAnswer = option.OptionText;
+                }
+
+
+                await _questionResultRepository.AddAsync(new QuestionResult
+                {
+                    CreatedBy = loginUserId,
+                    AssessmentSubmissionId = submission.Id,
+                    AssesmentSubmission = submission,
+                    DateCreated = DateTime.UtcNow,
+                    QuestionId = question.Id,
+                    UserAnswer = userAnswer
+                });
+            }
+            await _unitOfWork.SaveAsync();
+            return new BaseResponse
+            {
+                Message = "Assessment submission successfull",
+                Status = true
             };
         }
 
@@ -158,6 +234,27 @@ namespace QuestionGenerator.Core.Application.Services
                 Message = "List of assessments",
                 Status = true,
                 Value = response
+            };
+        }
+
+        public async Task<BaseResponse> DeleteAssessment(int id)
+        {
+            var assessment = await _assessmentRepository.GetAsync(id);
+            if (assessment == null)
+            {
+                return new BaseResponse
+                {
+                    Message = "Assessment not found",
+                    Status = false
+                };
+            }
+
+            _assessmentRepository.Remove(assessment);
+            await _unitOfWork.SaveAsync();
+            return new BaseResponse
+            {
+                Message = "Assessment removed successfully",
+                Status = true
             };
         }
 

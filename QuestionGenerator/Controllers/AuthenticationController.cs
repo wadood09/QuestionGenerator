@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using QuestionGenerator.Core.Application.Config;
 using QuestionGenerator.Core.Application.Interfaces.Services;
+using QuestionGenerator.Core.Application.Services;
 using QuestionGenerator.Core.Domain.Enums;
 using QuestionGenerator.Models.UserModel;
 
@@ -17,14 +18,16 @@ namespace QuestionGenerator.Controllers
         private readonly IAuthService _authService;
         private readonly IIdentityService _identityService;
         private readonly ITokenService _tokenService;
+        private readonly IPaymentService _paymentService;
 
-        public AuthenticationController(IOptions<JwtConfig> jwtConfig, IUserService userService, IIdentityService identityService, ITokenService tokenService, IAuthService authService)
+        public AuthenticationController(IOptions<JwtConfig> jwtConfig, IUserService userService, IIdentityService identityService, ITokenService tokenService, IAuthService authService, IPaymentService paymentService)
         {
             _jwtConfig = jwtConfig.Value;
             _userService = userService;
             _identityService = identityService;
             _tokenService = tokenService;
             _authService = authService;
+            _paymentService = paymentService;
         }
 
         [HttpPost("login")]
@@ -73,7 +76,7 @@ namespace QuestionGenerator.Controllers
             return BadRequest(new { message = user.Message });
         }
 
-        [HttpPost("refresh-token")]
+        [HttpGet("refresh-token")]
         public async Task<IActionResult> RefreshToken()
         {
             var refreshToken = Request.Cookies["refreshToken"];
@@ -144,6 +147,27 @@ namespace QuestionGenerator.Controllers
                 Expires = DateTime.UtcNow.AddDays(7)
             });
             return Ok(new { accessToken });
+        }
+
+        [HttpGet("verify/{reference}")]
+        public async Task<IActionResult> VerifyPayment([FromRoute] string reference)
+        {
+            var result = await _paymentService.VerifyPayment(reference);
+
+            if (result.Status)
+                return Ok(new { message = result.Message });
+
+            if (result.Message.Contains("Payment verification failed"))
+                return StatusCode(502, new { message = result.Message });
+
+            else if (result.Message.Contains("Error processing response"))
+                return StatusCode(502, new { message = result.Message });
+
+            else if (result.Message.Contains("Payment verification failed with no message"))
+                return BadRequest(new { message = result.Message });
+
+            else
+                return StatusCode(500, new { message = result.Message });
         }
     }
 }

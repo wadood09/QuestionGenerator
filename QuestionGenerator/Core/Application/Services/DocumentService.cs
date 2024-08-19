@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using OpenAI_API;
 using OpenAI_API.Completions;
 using QuestionGenerator.Core.Application.Config;
+using QuestionGenerator.Core.Application.Exceptions;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Application.Interfaces.Services;
 using QuestionGenerator.Core.Domain.Entities;
@@ -41,33 +42,17 @@ namespace QuestionGenerator.Core.Application.Services
         public async Task<BaseResponse> CreateDocument(DocumentRequest request)
         {
             var loginUserId = int.Parse(_httpContextAccessor.HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub));
-            var user = await _userRepository.GetAsync(loginUserId);
-            if (user == null)
-            {
-                return new BaseResponse
-                {
-                    Message = "User is not authenticated",
-                    Status = false
-                };
-            }
+            var user = await _userRepository.GetAsync(loginUserId) ?? throw new UnAuthenticatedUserException();
 
             var documentExists = await _documentRepository.ExistsAsync(loginUserId, request.Title);
             if (documentExists)
             {
-                return new BaseResponse
-                {
-                    Message = $"{request.Title} document already exists",
-                    Status = false
-                };
+                throw new DocumentAlreadyExistsException();
             }
 
             if (request.Document == null || request.Document.Length == 0)
             {
-                return new BaseResponse
-                {
-                    Message = "No file uploaded",
-                    Status = false
-                };
+                throw new InvalidDocumentException();
             }
 
             double fileSizeInMB = request.Document.Length / (1024.0 * 1024.0);
@@ -78,41 +63,25 @@ namespace QuestionGenerator.Core.Application.Services
             var currentDocumentExtension = request.Document.ContentType.Split('/')[1];
             if(!allDocumentExtensions.Contains(currentDocumentExtension))
             {
-                return new BaseResponse
-                {
-                    Message = "File uploaded isn't a document file",
-                    Status = false
-                };
+                throw new UnsupportedDocumentTypeException();
             }
 
             if (user.Role.Name == "Basic User")
             {
                 if (fileSizeInMB > 10)
                 {
-                    return new BaseResponse
-                    {
-                        Message = "File size must be 10mb or less",
-                        Status = false
-                    };
+                    throw new FileTooLargeException(true);
                 }
                 else if(!freeDocumentExtensions.Contains(currentDocumentExtension))
                 {
-                    return new BaseResponse
-                    {
-                        Message = "Upgrade tier in order to upload this type of document",
-                        Status = false
-                    };
+                    throw new FileTypeRestrictedException();
                 }
             }
             else
             {
                 if (fileSizeInMB > 30)
                 {
-                    return new BaseResponse
-                    {
-                        Message = "File size must be 30mb or less",
-                        Status = false
-                    };
+                    throw new FileTooLargeException(false);
                 }
             }
 
@@ -201,9 +170,9 @@ namespace QuestionGenerator.Core.Application.Services
             };
         }
 
-        public async Task<BaseResponse<DocumentResponse>> GetDocument(string title)
+        public async Task<BaseResponse<DocumentResponse>> GetDocument(int userId, string title)
         {
-            var document = await _documentRepository.GetAsync(x => x.Title == title);
+            var document = await _documentRepository.GetAsync(x => x.Title == title && x.UserId == userId);
             if(document == null)
             {
                 return new BaseResponse<DocumentResponse>
