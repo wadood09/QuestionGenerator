@@ -15,13 +15,13 @@ namespace QuestionGenerator.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<AssesmentSubmission> AddAsync(AssesmentSubmission assesment)
+        public async Task<AssessmentSubmission> AddAsync(AssessmentSubmission assesment)
         {
             await _context.AssessmentSubmissions.AddAsync(assesment);
             return assesment;
         }
 
-        public async Task<ICollection<AssesmentSubmission>> GetAllAsync(Expression<Func<AssesmentSubmission, bool>> exp)
+        public async Task<ICollection<AssessmentSubmission>> GetAllAsync(Expression<Func<AssessmentSubmission, bool>> exp)
         {
             var assessments = await _context.AssessmentSubmissions
                 .Include(x => x.Results).ThenInclude(y => y.Question)
@@ -29,7 +29,7 @@ namespace QuestionGenerator.Infrastructure.Repositories
             return assessments;
         }
 
-        public async Task<ICollection<AssesmentSubmission>> GetAllAsync()
+        public async Task<ICollection<AssessmentSubmission>> GetAllAsync()
         {
             var assessments = await _context.AssessmentSubmissions
                 .Include(x => x.Results).ThenInclude(y => y.Question)
@@ -37,26 +37,38 @@ namespace QuestionGenerator.Infrastructure.Repositories
             return assessments;
         }
 
-        public async Task<AssesmentSubmission> GetAsync(int id)
+        public async Task<AssessmentSubmission> GetAsync(int id)
         {
-            var assessment = await _context.AssessmentSubmissions.FindAsync(id);
+            var assessment = await _context.AssessmentSubmissions
+                .Include(x => x.Document)
+                .Include(x => x.Assessment)
+                .Include(x => x.Results)
+                .ThenInclude(x => x.Question)
+                .ThenInclude(x => x.Options)
+                .FirstOrDefaultAsync(x => x.Id == id);
             return assessment;
         }
 
-        public async Task<AssesmentSubmission> GetAsync(Expression<Func<AssesmentSubmission, bool>> exp)
+        public async Task<AssessmentSubmission> GetAsync(Expression<Func<AssessmentSubmission, bool>> exp)
         {
-            var assessment = await _context.AssessmentSubmissions.FirstOrDefaultAsync(exp);
+            var assessment = await _context.AssessmentSubmissions
+                .Include(x => x.Document)
+                .Include(x => x.Assessment)
+                .Include(x => x.Results)
+                .ThenInclude(x => x.Question)
+                .ThenInclude(x => x.Options)
+                .FirstOrDefaultAsync(exp);
             return assessment;
         }
 
-        public AssesmentSubmission Remove(AssesmentSubmission assesment)
+        public AssessmentSubmission Remove(AssessmentSubmission assesment)
         {
             assesment.IsDeleted = true;
             _context.AssessmentSubmissions.Update(assesment);
             return assesment;
         }
 
-        public AssesmentSubmission Update(AssesmentSubmission assesment)
+        public AssessmentSubmission Update(AssessmentSubmission assesment)
         {
             _context.AssessmentSubmissions.Update(assesment);
             return assesment;

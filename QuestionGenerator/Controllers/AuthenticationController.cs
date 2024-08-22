@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using QuestionGenerator.Core.Application.Config;
 using QuestionGenerator.Core.Application.Interfaces.Services;
-using QuestionGenerator.Core.Application.Services;
 using QuestionGenerator.Core.Domain.Enums;
+using QuestionGenerator.Models;
 using QuestionGenerator.Models.UserModel;
 
 namespace QuestionGenerator.Controllers
@@ -51,7 +52,7 @@ namespace QuestionGenerator.Controllers
                     var refreshToken = await _tokenService.GenerateToken(user.User.Id, TokenType.RefreshToken);
                     if (!refreshToken.Status)
                         return Unauthorized(new { message = "Invalid Login Credentials" });
-                    
+
                     Response.Cookies.Append("refreshToken", refreshToken.Value, new CookieOptions
                     {
                         HttpOnly = true,
@@ -110,9 +111,9 @@ namespace QuestionGenerator.Controllers
         }
 
         [HttpPost("send-resetLink")]
-        public async Task<IActionResult> SendResetLink([FromBody] string email)
+        public async Task<IActionResult> SendResetLink([FromBody] ResetLinkRequest request)
         {
-            var user = await _userService.GetUserByEmail(email);
+            var user = await _userService.GetUserByEmail(request.Email);
             if (!user.Status)
                 return NotFound(new { message = user.Message });
 
@@ -120,7 +121,7 @@ namespace QuestionGenerator.Controllers
             if (!resetToken.Status)
                 return NotFound(new { message = resetToken.Message });
 
-            var resetLink = await _authService.SendPasswordResetEmail(email, resetToken.Value!);
+            var resetLink = await _authService.SendPasswordResetEmail(request.Email, resetToken.Value!);
             if (!resetLink.Status)
                 return BadRequest(new { message = resetLink.Message });
 
@@ -150,6 +151,7 @@ namespace QuestionGenerator.Controllers
         }
 
         [HttpGet("verify/{reference}")]
+        [Authorize]
         public async Task<IActionResult> VerifyPayment([FromRoute] string reference)
         {
             var result = await _paymentService.VerifyPayment(reference);

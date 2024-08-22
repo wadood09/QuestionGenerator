@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuestionGenerator.Core.Application.Exceptions;
 using QuestionGenerator.Core.Application.Interfaces.Services;
@@ -10,6 +10,7 @@ namespace QuestionGenerator.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DocumentController : ControllerBase
     {
         private readonly IDocumentService _documentService;

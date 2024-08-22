@@ -8,7 +8,7 @@
 
         #region Relationships
         public Question Question { get; set; }
-        public AssesmentSubmission AssesmentSubmission { get; set; }
+        public AssessmentSubmission AssesmentSubmission { get; set; }
 
         #endregion
     }

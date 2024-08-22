@@ -23,13 +23,21 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public async Task<ICollection<Assessment>> GetAllAsync(Expression<Func<Assessment, bool>> exp)
         {
-            var assessments = await _context.Assessments.Where(exp).ToListAsync();
+            var assessments = await _context.Assessments
+                .Include(x => x.AssessmentSubmissions)
+                .ThenInclude(x => x.Results)
+                .ThenInclude(x => x.Question)
+                .Where(exp).ToListAsync();
             return assessments;
         }
 
         public async Task<ICollection<Assessment>> GetAllAsync()
         {
-            var assessments = await _context.Assessments.ToListAsync();
+            var assessments = await _context.Assessments
+                .Include(x => x.AssessmentSubmissions)
+                .ThenInclude(x => x.Results)
+                .ThenInclude(x => x.Question)
+                .ToListAsync();
             return assessments;
         }
 

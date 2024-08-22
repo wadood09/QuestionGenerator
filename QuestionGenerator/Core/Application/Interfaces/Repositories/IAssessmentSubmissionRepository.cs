@@ -5,12 +5,12 @@ namespace QuestionGenerator.Core.Application.Interfaces.Repositories
 {
     public interface IAssessmentSubmissionRepository
     {
-        Task<AssesmentSubmission> AddAsync(AssesmentSubmission assesment);
-        Task<AssesmentSubmission> GetAsync(int id);
-        Task<AssesmentSubmission> GetAsync(Expression<Func<AssesmentSubmission, bool>> exp);
-        Task<ICollection<AssesmentSubmission>> GetAllAsync(Expression<Func<AssesmentSubmission, bool>> exp);
-        Task<ICollection<AssesmentSubmission>> GetAllAsync();
-        AssesmentSubmission Update(AssesmentSubmission assesment);
-        AssesmentSubmission Remove(AssesmentSubmission assesment);
+        Task<AssessmentSubmission> AddAsync(AssessmentSubmission assesment);
+        Task<AssessmentSubmission> GetAsync(int id);
+        Task<AssessmentSubmission> GetAsync(Expression<Func<AssessmentSubmission, bool>> exp);
+        Task<ICollection<AssessmentSubmission>> GetAllAsync(Expression<Func<AssessmentSubmission, bool>> exp);
+        Task<ICollection<AssessmentSubmission>> GetAllAsync();
+        AssessmentSubmission Update(AssessmentSubmission assesment);
+        AssessmentSubmission Remove(AssessmentSubmission assesment);
     }
 }

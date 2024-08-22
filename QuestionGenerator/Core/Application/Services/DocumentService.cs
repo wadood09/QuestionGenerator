@@ -154,13 +154,6 @@ namespace QuestionGenerator.Core.Application.Services
             }
 
             var response = _mapper.Map<DocumentResponse>(document);
-            await Task.WhenAll(response.Assessments.Select(async x =>
-            {
-                var revisitedAssessments = await _assessmentSubmissionRepository.GetAllAsync(r => r.AssessmentId == x.Id);
-                var recentAssessment = revisitedAssessments.OrderByDescending(r => r.DateCreated).First();
-                var recentGrade = revisitedAssessments.Count != 0 ? GetGrade(recentAssessment) : null;
-                x.RecentGrade = recentGrade != null ? $"{recentGrade}%" : "";
-            }));
 
             return new BaseResponse<DocumentResponse>
             {
@@ -183,13 +176,6 @@ namespace QuestionGenerator.Core.Application.Services
             }
 
             var response = _mapper.Map<DocumentResponse>(document);
-            await Task.WhenAll(response.Assessments.Select(async x =>
-            {
-                var revisitedAssessments = await _assessmentSubmissionRepository.GetAllAsync(r => r.AssessmentId == x.Id);
-                var recentAssessment = revisitedAssessments.OrderByDescending(r => r.DateCreated).First();
-                var recentGrade = revisitedAssessments.Count != 0 ? GetGrade(recentAssessment) : null;
-                x.RecentGrade = recentGrade != null ? $"{recentGrade}%" : "";
-            }));
 
             return new BaseResponse<DocumentResponse>
             {
@@ -211,7 +197,7 @@ namespace QuestionGenerator.Core.Application.Services
             };
         }
 
-        private static double? GetGrade(AssesmentSubmission assessment)
+        private static double? GetGrade(AssessmentSubmission assessment)
         {
             if (assessment == null)
                 return null;

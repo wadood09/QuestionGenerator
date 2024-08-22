@@ -1,6 +1,6 @@
 ﻿namespace QuestionGenerator.Core.Domain.Entities
 {
-    public class AssesmentSubmission : Auditables
+    public class AssessmentSubmission : Auditables
     {
         public int AssessmentId { get; set; }
         public List<QuestionResult> Results { get; set; } = [];

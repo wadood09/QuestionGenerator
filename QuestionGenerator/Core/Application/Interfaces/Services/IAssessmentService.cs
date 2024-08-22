@@ -10,5 +10,6 @@ namespace QuestionGenerator.Core.Application.Interfaces.Services
         Task<BaseResponse<ICollection<AssessmentsResponse>>> GetAssessmentsByUser(int userId);
         Task<BaseResponse<AssessmentResponse>> TakeAssessment(int documentId, AssessmentRequest request);
         Task<BaseResponse> DeleteAssessment(int id);
+        Task<BaseResponse<ICollection<AssessmentsResponse>>> GetAssessmentsByDocumentTitle(string documentTitle);
     }
 }

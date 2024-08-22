@@ -14,7 +14,7 @@ namespace QuestionGenerator.Infrastructure.Context
         public DbSet<Document> Documents => Set<Document>();
         public DbSet<Option> Options => Set<Option>();
         public DbSet<Question> Questions => Set<Question>();
-        public DbSet<AssesmentSubmission> AssessmentSubmissions => Set<AssesmentSubmission>();
+        public DbSet<AssessmentSubmission> AssessmentSubmissions => Set<AssessmentSubmission>();
         public DbSet<QuestionResult> Results => Set<QuestionResult>();
         public DbSet<Token> Tokens => Set<Token>();
         public DbSet<Role> Roles => Set<Role>();
@@ -40,7 +40,7 @@ namespace QuestionGenerator.Infrastructure.Context
                 .HasQueryFilter(x => !x.IsDeleted)
                 .Property<int>("Id").ValueGeneratedOnAdd();
 
-            modelBuilder.Entity<AssesmentSubmission>().ToTable("AssessmentSubmissions")
+            modelBuilder.Entity<AssessmentSubmission>().ToTable("AssessmentSubmissions")
                 .HasQueryFilter(x => !x.IsDeleted)
                 .Property<int>("Id").ValueGeneratedOnAdd();
 
