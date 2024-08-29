@@ -110,7 +110,16 @@ namespace QuestionGenerator.Core.Application.Services
 
         public async Task<BaseResponse<ICollection<AssessmentAttemptsResponse>>> GetAssessmentAttempts(int assessmentId)
         {
-            var attempts = await _assessmentSubmissionRepository.GetAllAsync(x => x.AssessmentId == assessmentId);
+            var loggedInUserRole = _httpContextAccessor.HttpContext.User.FindFirstValue("Role");
+            int count = loggedInUserRole switch
+            {
+                "Basic User" => 5,
+                "Standard User" => 15,
+                "Premium User" => int.MaxValue,
+                _ => throw new InvalidUserRoleException()
+            };
+
+            var attempts = await _assessmentSubmissionRepository.GetAllAsync(x => x.AssessmentId == assessmentId, count);
             var response = _mapper.Map<List<AssessmentAttemptsResponse>>(attempts);
 
             return new BaseResponse<ICollection<AssessmentAttemptsResponse>>

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using OpenAI_API;
 using OpenAI_API.Completions;
 using QuestionGenerator.Core.Application.Config;
@@ -7,6 +8,7 @@ using QuestionGenerator.Core.Application.Exceptions;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Application.Interfaces.Services;
 using QuestionGenerator.Core.Domain.Entities;
+using QuestionGenerator.Core.Domain.Enums;
 using QuestionGenerator.Models;
 using QuestionGenerator.Models.DocumentModel;
 using System.IdentityModel.Tokens.Jwt;
@@ -19,14 +21,13 @@ namespace QuestionGenerator.Core.Application.Services
         private readonly OpenAiConfig _openAiConfig;
         private readonly StorageConfig _storageConfig;
         private readonly IDocumentRepository _documentRepository;
-        private readonly IAssessmentSubmissionRepository _assessmentSubmissionRepository;
         private readonly IUserRepository _userRepository;
         private readonly IFileRepository _fileRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-         
-        public DocumentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IDocumentRepository documentRepository, IUserRepository userRepository, IHttpContextAccessor httpContextAccessor, IUnitOfWork unitOfWork, IMapper mapper, IFileRepository fileRepository, IAssessmentSubmissionRepository assessmentSubmissionRepository)
+
+        public DocumentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IDocumentRepository documentRepository, IUserRepository userRepository, IHttpContextAccessor httpContextAccessor, IUnitOfWork unitOfWork, IMapper mapper, IFileRepository fileRepository)
         {
             _openAiConfig = openAiConfig.Value;
             _storageConfig = storageConfig.Value;
@@ -36,12 +37,12 @@ namespace QuestionGenerator.Core.Application.Services
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _fileRepository = fileRepository;
-            _assessmentSubmissionRepository = assessmentSubmissionRepository;
         }
 
         public async Task<BaseResponse> CreateDocument(DocumentRequest request)
         {
-            var loginUserId = int.Parse(_httpContextAccessor.HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub));
+            var userId = _httpContextAccessor.HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            var loginUserId = int.Parse(userId ?? "0");
             var user = await _userRepository.GetAsync(loginUserId) ?? throw new UnAuthenticatedUserException();
 
             var documentExists = await _documentRepository.ExistsAsync(loginUserId, request.Title);
@@ -57,32 +58,48 @@ namespace QuestionGenerator.Core.Application.Services
 
             double fileSizeInMB = request.Document.Length / (1024.0 * 1024.0);
 
-            string[] allDocumentExtensions = ["txt", "doc", "docx", "odt", "rtf", "pdf", "xls", "xlsx", "ods", "csv", "ppt", "pptx", "odp", "xml", "json", "yaml", "yml"];
-            string[] freeDocumentExtensions = ["txt", "pptx", "docx", "doc", "ppt"];
+            string[] allowedExtensions = { "txt", "doc", "docx", "pdf", "ppt", "pptx" };
+            var currentDocumentExtension = Path.GetExtension(request.Document.FileName)?.TrimStart('.').ToLower();
 
-            var currentDocumentExtension = request.Document.ContentType.Split('/')[1];
-            if(!allDocumentExtensions.Contains(currentDocumentExtension))
+            if (!allowedExtensions.Contains(currentDocumentExtension) || string.IsNullOrEmpty(currentDocumentExtension))
             {
                 throw new UnsupportedDocumentTypeException();
             }
 
-            if (user.Role.Name == "Basic User")
+            switch (user.Role.Name)
             {
-                if (fileSizeInMB > 10)
-                {
-                    throw new FileTooLargeException(true);
-                }
-                else if(!freeDocumentExtensions.Contains(currentDocumentExtension))
-                {
-                    throw new FileTypeRestrictedException();
-                }
-            }
-            else
-            {
-                if (fileSizeInMB > 30)
-                {
-                    throw new FileTooLargeException(false);
-                }
+                case "Basic User":
+                    if (fileSizeInMB > 5)
+                    {
+                        throw new FileTooLargeException(UserType.Basic);
+                    }
+                    if (currentDocumentExtension != "txt")
+                    {
+                        throw new FileTypeRestrictedException(UserType.Basic);
+                    }
+                    break;
+
+                case "Standard User":
+                    if (fileSizeInMB > 20)
+                    {
+                        throw new FileTooLargeException(UserType.Standard);
+                    }
+                    string[] standardRestrictedExtensions = { "txt", "doc", "docx" };
+                    if (!standardRestrictedExtensions.Contains(currentDocumentExtension))
+                    {
+                        throw new FileTypeRestrictedException(UserType.Standard);
+                    }
+                    break;
+
+                case "Premium User":
+                    if (fileSizeInMB > 50)
+                    {
+                        throw new FileTooLargeException(UserType.Premium);
+                    }
+                    break;
+
+                default:
+                    throw new InvalidUserRoleException();
             }
 
             var documentUrl = await _fileRepository.UploadAsync(request.Document);
@@ -144,7 +161,7 @@ namespace QuestionGenerator.Core.Application.Services
         public async Task<BaseResponse<DocumentResponse>> GetDocument(int id)
         {
             var document = await _documentRepository.GetAsync(id);
-            if(document == null)
+            if (document == null)
             {
                 return new BaseResponse<DocumentResponse>
                 {
@@ -166,7 +183,7 @@ namespace QuestionGenerator.Core.Application.Services
         public async Task<BaseResponse<DocumentResponse>> GetDocument(int userId, string title)
         {
             var document = await _documentRepository.GetAsync(x => x.Title == title && x.UserId == userId);
-            if(document == null)
+            if (document == null)
             {
                 return new BaseResponse<DocumentResponse>
                 {

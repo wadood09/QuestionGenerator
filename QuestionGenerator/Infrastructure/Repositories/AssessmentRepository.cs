@@ -59,6 +59,14 @@ namespace QuestionGenerator.Infrastructure.Repositories
             return assessment;
         }
 
+        public async Task<int> GetAssessmentsTakenThisMonth(int userId)
+        {
+            var count = await _context.Assessments.CountAsync(x => x.UserId == userId &&
+                     x.DateCreated.Year == DateTime.Now.Year &&
+                     x.DateCreated.Month == DateTime.Now.Month);
+            return count;
+        }
+
         public Assessment Remove(Assessment assessment)
         {
             assessment.IsDeleted = true;

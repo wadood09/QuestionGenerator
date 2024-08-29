@@ -5,6 +5,7 @@ using QuestionGenerator.Core.Application.Exceptions;
 using QuestionGenerator.Core.Application.Interfaces.Services;
 using QuestionGenerator.Models.AssessmentModel;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 
 namespace QuestionGenerator.Controllers
@@ -38,6 +39,30 @@ namespace QuestionGenerator.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
+            catch (MaxQuestionCountExceededException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (MaxAssessmentsExceededException ex)
+            {
+                return StatusCode((int)HttpStatusCode.TooManyRequests, new { message = ex.Message });
+            }
+            catch (AdvancedPreferencesNotAllowedException ex)
+            {
+                return StatusCode((int)HttpStatusCode.Forbidden, new { message = ex.Message });
+            }
+            catch (UnsupportedAssessmentTypeException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidDifficultyLevelException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { message = "An unexpected error occurred." });
+            }
         }
 
         [HttpGet("{id}")]
@@ -53,8 +78,15 @@ namespace QuestionGenerator.Controllers
         [HttpGet("{id}/attempts")]
         public async Task<IActionResult> GetAssessmentAttempts([FromRoute] int id)
         {
-            var attempts = await _assessmentSubmissionService.GetAssessmentAttempts(id);
-            return Ok(new { attempts = attempts.Value });
+            try
+            {
+                var attempts = await _assessmentSubmissionService.GetAssessmentAttempts(id);
+                return Ok(new { attempts = attempts.Value });
+            }
+            catch (InvalidUserRoleException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpGet]

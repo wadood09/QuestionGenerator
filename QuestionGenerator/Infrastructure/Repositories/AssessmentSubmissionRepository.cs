@@ -21,17 +21,19 @@ namespace QuestionGenerator.Infrastructure.Repositories
             return assesment;
         }
 
-        public async Task<ICollection<AssessmentSubmission>> GetAllAsync(Expression<Func<AssessmentSubmission, bool>> exp)
+        public async Task<ICollection<AssessmentSubmission>> GetAllAsync(Expression<Func<AssessmentSubmission, bool>> exp, int count = int.MaxValue)
         {
             var assessments = await _context.AssessmentSubmissions
+                .OrderByDescending(x => x.DateCreated).Take(count)
                 .Include(x => x.Results).ThenInclude(y => y.Question)
                 .Where(exp).ToListAsync();
             return assessments;
         }
 
-        public async Task<ICollection<AssessmentSubmission>> GetAllAsync()
+        public async Task<ICollection<AssessmentSubmission>> GetAllAsync(int count = int.MaxValue)
         {
             var assessments = await _context.AssessmentSubmissions
+                .OrderByDescending(x => x.DateCreated).Take(count)
                 .Include(x => x.Results).ThenInclude(y => y.Question)
                 .ToListAsync();
             return assessments;

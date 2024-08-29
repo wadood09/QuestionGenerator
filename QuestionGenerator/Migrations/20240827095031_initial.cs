@@ -259,7 +259,6 @@ namespace QuestionGenerator.Migrations
                     QuestionId = table.Column<int>(type: "int", nullable: false),
                     AssessmentSubmissionId = table.Column<int>(type: "int", nullable: false),
                     UserAnswer = table.Column<string>(type: "longtext", nullable: false),
-                    AssesmentSubmissionId = table.Column<int>(type: "int", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     CreatedBy = table.Column<string>(type: "longtext", nullable: false),
                     ModifiedBy = table.Column<string>(type: "longtext", nullable: true),
@@ -270,8 +269,8 @@ namespace QuestionGenerator.Migrations
                 {
                     table.PrimaryKey("PK_Results", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Results_AssessmentSubmissions_AssesmentSubmissionId",
-                        column: x => x.AssesmentSubmissionId,
+                        name: "FK_Results_AssessmentSubmissions_AssessmentSubmissionId",
+                        column: x => x.AssessmentSubmissionId,
                         principalTable: "AssessmentSubmissions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -334,9 +333,9 @@ namespace QuestionGenerator.Migrations
                 column: "AssessmentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Results_AssesmentSubmissionId",
+                name: "IX_Results_AssessmentSubmissionId",
                 table: "Results",
-                column: "AssesmentSubmissionId");
+                column: "AssessmentSubmissionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Results_QuestionId",

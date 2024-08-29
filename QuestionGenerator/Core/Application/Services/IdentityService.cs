@@ -11,6 +11,7 @@ namespace QuestionGenerator.Core.Application.Services
     {
         public string GenerateAccessToken(string key, string issuer, string audience, UserResponse user)
         {
+            var issuedAt = DateTime.UtcNow;
 
             var claims = new List<Claim>
             {
@@ -20,8 +21,7 @@ namespace QuestionGenerator.Core.Application.Services
                 new Claim("Profile Picture", user.ProfilePictureUrl ?? ""), // Profile picture URL
                 new Claim("Role", user.RoleName), // Role
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // JWT ID
-                new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()), // Issued at
-                new Claim(JwtRegisteredClaimNames.Exp, DateTime.UtcNow.AddMinutes(15).ToString()), // Expiration
+                new Claim(JwtRegisteredClaimNames.Exp, issuedAt.AddMinutes(15).ToString()), // Expiration
                 new Claim(JwtRegisteredClaimNames.Aud, audience), // Audience
                 new Claim(JwtRegisteredClaimNames.Iss, issuer) // Issuer
             };
@@ -29,7 +29,7 @@ namespace QuestionGenerator.Core.Application.Services
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var tokenDescriptor = new JwtSecurityToken(issuer, audience, claims,
-                expires: DateTime.UtcNow.AddMinutes(15), signingCredentials: credentials);
+                expires: issuedAt.AddMinutes(15), signingCredentials: credentials);
             var token = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
             return token;
         }

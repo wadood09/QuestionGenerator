@@ -4,11 +4,12 @@ using QuestionGenerator.Core.Application.Exceptions;
 using QuestionGenerator.Core.Application.Interfaces.Services;
 using QuestionGenerator.Models.DocumentModel;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 
 namespace QuestionGenerator.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/document")]
     [ApiController]
     [Authorize]
     public class DocumentController : ControllerBase
@@ -42,19 +43,23 @@ namespace QuestionGenerator.Controllers
             }
             catch (UnsupportedDocumentTypeException ex)
             {
-                return StatusCode(415, new { message = ex.Message });
+                return StatusCode((int)HttpStatusCode.UnsupportedMediaType, new { message = ex.Message });
             }
             catch (FileTooLargeException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
+            catch (InvalidUserRoleException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             catch (FileTypeRestrictedException ex)
             {
-                return StatusCode(403, new { message = ex.Message });
+                return StatusCode((int)HttpStatusCode.Forbidden, new { message = ex.Message });
             }
             catch (Exception)
             {
-                return StatusCode(500, new { message = "An error occurred while processing the document." });
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { message = "An error occurred while processing the document." });
             }
         }
 

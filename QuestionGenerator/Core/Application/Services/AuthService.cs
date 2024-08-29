@@ -100,7 +100,7 @@ namespace QuestionGenerator.Core.Application.Services
                     user = await _userRepository.GetAsync(x => x.Email == validPayload.Email);
                     if (user == null)
                     {
-                        var role = await _roleRepository.GetAsync(x => x.Name.Equals("Basic User"));
+                        var role = await _roleRepository.GetAsync(x => x.Name.Equals("Free User"));
                         user = new User
                         {
                             Email = validPayload.Email,
@@ -146,7 +146,7 @@ namespace QuestionGenerator.Core.Application.Services
         {
             try
             {
-                var resetLink = $"https://localhost:7125/reset-password?token={resetToken}";
+                var resetLink = $"http://localhost:5500/reset-password?token={resetToken}";
 
                 var emailData = new
                 {

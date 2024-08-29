@@ -51,7 +51,7 @@ namespace QuestionGenerator.Core.Application.Services
                 };
             }
 
-            var role = await _roleRepository.GetAsync(x => x.Name.Equals("Basic User"));
+            var role = await _roleRepository.GetAsync(x => x.Name.Equals("Free User"));
             if (role == null)
             {
                 return new BaseResponse
@@ -90,7 +90,7 @@ namespace QuestionGenerator.Core.Application.Services
             {
                 return new BaseResponse<UserResponse>
                 {
-                    Message = "User not found",
+                    Message = "User not found. Please register and try again later",
                     Status = false
                 };
             }
@@ -132,7 +132,7 @@ namespace QuestionGenerator.Core.Application.Services
             {
                 return new BaseResponse<UserResponse>
                 {
-                    Message = "User not found",
+                    Message = "User not found. Please register and try again later. Please register and try again later",
                     Status = false
                 };
             }
@@ -153,7 +153,7 @@ namespace QuestionGenerator.Core.Application.Services
             {
                 return new BaseResponse
                 {
-                    Message = "User not found",
+                    Message = "User not found. Please register and try again later",
                     Status = false
                 };
             }
@@ -173,7 +173,7 @@ namespace QuestionGenerator.Core.Application.Services
             {
                 return new BaseResponse
                 {
-                    Message = "User not found",
+                    Message = "User not found. Please register and try again later",
                     Status = false
                 };
             }
@@ -223,7 +223,7 @@ namespace QuestionGenerator.Core.Application.Services
             {
                 return new BaseResponse
                 {
-                    Message = "User not found",
+                    Message = "User not found. Please register and try again later",
                     Status = false
                 };
             }

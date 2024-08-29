@@ -10,7 +10,6 @@ using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Core.Domain.Enums;
 using QuestionGenerator.Models;
 using QuestionGenerator.Models.AssessmentModel;
-using QuestionGenerator.Models.AssessmentSubmissionModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
@@ -58,6 +57,62 @@ namespace QuestionGenerator.Core.Application.Services
 
             var loginUserId = _httpContextAccessor.HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             var user = await _userRepository.GetAsync(int.Parse(loginUserId ?? "0")) ?? throw new UnAuthenticatedUserException();
+            var assessmentsTakenThisMonth = await _assessmentRepository.GetAssessmentsTakenThisMonth(user.Id);
+
+            if (user.Role.Name == "Basic User")
+            {
+                if (request.QuestionCount > 10)
+                {
+                    throw new MaxQuestionCountExceededException(UserType.Basic);
+                }
+                if (assessmentsTakenThisMonth >= 5)
+                {
+                    throw new MaxAssessmentsExceededException(UserType.Basic);
+                }
+                if (request.AdvancedPrefences)
+                {
+                    throw new AdvancedPreferencesNotAllowedException();
+                }
+                if (request.AssessmentType != AssessmentType.MultipleChoice)
+                {
+                    throw new UnsupportedAssessmentTypeException(UserType.Basic);
+                }
+                if (request.DifficultyLevel != DifficultyLevel.Easy)
+                {
+                    throw new InvalidDifficultyLevelException(UserType.Basic);
+                }
+            }
+            else if (user.Role.Name == "Standard User")
+            {
+                if (request.QuestionCount > 50)
+                {
+                    throw new MaxQuestionCountExceededException(UserType.Standard);
+                }
+                if (assessmentsTakenThisMonth >= 50)
+                {
+                    throw new MaxAssessmentsExceededException(UserType.Standard);
+                }
+                if (request.AdvancedPrefences)
+                {
+                    throw new AdvancedPreferencesNotAllowedException();
+                }
+                if (request.AssessmentType != AssessmentType.MultipleChoice && request.AssessmentType != AssessmentType.TrueFalse)
+                {
+                    throw new UnsupportedAssessmentTypeException(UserType.Standard);
+                }
+                if (request.DifficultyLevel == DifficultyLevel.Hard)
+                {
+                    throw new InvalidDifficultyLevelException(UserType.Standard);
+                }
+            }
+            else
+            {
+                if (request.QuestionCount > 75)
+                {
+                    throw new MaxQuestionCountExceededException(UserType.Premium);
+                }
+            }
+
 
             var openApi = new OpenAIAPI(_openAiConfig.ApiKey);
             var documentContent = File.ReadAllLines($"{_storageConfig.Path}\\Documents\\{document.DocumentUrl}");

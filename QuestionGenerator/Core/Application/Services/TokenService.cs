@@ -28,7 +28,7 @@ namespace QuestionGenerator.Core.Application.Services
             {
                 return new BaseResponse<string>
                 {
-                    Message = "User not found",
+                    Message = "User not found. Please register and try again later",
                     Status = false
                 };
             }

@@ -41,12 +41,12 @@ namespace QuestionGenerator.Controllers
                 {
                     return Conflict(new
                     {
-                        message = "This account was created using Google Sign-In, and no password is set.",
-                        action = "Please set a password or use Google Sign-In."
+                        message = "This account was created using Google Sign-In, and no password is set. Please set a password or use Google Sign-In.",
                     });
                 }
 
                 var accessToken = _identityService.GenerateAccessToken(_jwtConfig.Key, _jwtConfig.Issuer, _jwtConfig.Audience, user.User);
+                //var isValid = _identityService.IsTokenValid(_jwtConfig.Key, _jwtConfig.Issuer, _jwtConfig.Audience, accessToken);
                 if (request.RememberMe)
                 {
                     var refreshToken = await _tokenService.GenerateToken(user.User.Id, TokenType.RefreshToken);
@@ -138,7 +138,7 @@ namespace QuestionGenerator.Controllers
             var accessToken = _identityService.GenerateAccessToken(_jwtConfig.Key, _jwtConfig.Issuer, _jwtConfig.Audience, user.Value!);
             var refreshToken = await _tokenService.GenerateToken(user.Value!.Id, TokenType.RefreshToken);
             if (!refreshToken.Status)
-                return Unauthorized(new { message = "User not found" });
+                return Unauthorized(new { message = "User not found. Please register and try again later" });
 
             Response.Cookies.Append("refreshToken", refreshToken.Value!, new CookieOptions
             {
