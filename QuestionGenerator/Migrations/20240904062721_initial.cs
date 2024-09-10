@@ -288,8 +288,9 @@ namespace QuestionGenerator.Migrations
                 columns: new[] { "Id", "CreatedBy", "DateCreated", "DateModified", "IsDeleted", "ModifiedBy", "Name" },
                 values: new object[,]
                 {
-                    { 1, "1", new DateTime(2024, 6, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), null, false, null, "Free User" },
-                    { 2, "1", new DateTime(2024, 6, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), null, false, null, "Premium User" }
+                    { 1, "1", new DateTime(2024, 6, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), null, false, null, "Basic User" },
+                    { 2, "1", new DateTime(2024, 6, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), null, false, null, "Standard User" },
+                    { 3, "1", new DateTime(2024, 6, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), null, false, null, "Premium User" }
                 });
 
             migrationBuilder.CreateIndex(

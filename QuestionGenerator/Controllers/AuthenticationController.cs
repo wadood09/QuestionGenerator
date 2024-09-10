@@ -46,7 +46,7 @@ namespace QuestionGenerator.Controllers
                 }
 
                 var accessToken = _identityService.GenerateAccessToken(_jwtConfig.Key, _jwtConfig.Issuer, _jwtConfig.Audience, user.User);
-                //var isValid = _identityService.IsTokenValid(_jwtConfig.Key, _jwtConfig.Issuer, _jwtConfig.Audience, accessToken);
+                var isValid = _identityService.IsTokenValid(_jwtConfig.Key, _jwtConfig.Issuer, _jwtConfig.Audience, accessToken);
                 if (request.RememberMe)
                 {
                     var refreshToken = await _tokenService.GenerateToken(user.User.Id, TokenType.RefreshToken);
@@ -61,7 +61,7 @@ namespace QuestionGenerator.Controllers
                         Expires = DateTime.UtcNow.AddDays(7)
                     });
                 }
-                return Ok(new { accessToken });
+                return Ok(new { accessToken, role = user.User.RoleName });
             }
             return Unauthorized(new { message = user.Message });
         }

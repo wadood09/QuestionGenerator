@@ -103,7 +103,7 @@ namespace QuestionGenerator.Core.Application.Services
             await _unitOfWork.SaveAsync();
             return new BaseResponse
             {
-                Message = "Assessment submission successfull",
+                Message = $"{submission.Id}",
                 Status = true
             };
         }

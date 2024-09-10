@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace QuestionGenerator.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/assessment")]
     [ApiController]
     [Authorize]
     public class AssessmentController : ControllerBase
@@ -101,7 +101,7 @@ namespace QuestionGenerator.Controllers
                 var assessments = documentTitle == null ?
                     await _assessmentService.GetAssessmentsByUser(int.Parse(userId)) :
                     await _assessmentService.GetAssessmentsByDocumentTitle(documentTitle);
-                return Ok(new { assessments = assessments.Value });
+                return Ok(new { assessments = assessments.Value, documentTitle });
             }
             catch (UnAuthenticatedUserException ex)
             {

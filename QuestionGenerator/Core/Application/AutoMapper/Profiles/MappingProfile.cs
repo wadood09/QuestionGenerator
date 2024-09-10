@@ -27,11 +27,13 @@ namespace QuestionGenerator.Core.Application.AutoMapper.Profiles
 
             CreateMap<Assessment, AssessmentResponse>()
                 .ForMember(dest => dest.DocumentTitle, opt => opt.MapFrom(src => src.Document.Title))
-                .ForMember(dest => dest.AssessmentType, opt => opt.ConvertUsing(new AssessmentTypeConverter(), src => src.AssessmentType));
+                .ForMember(dest => dest.AssessmentType, opt => opt.ConvertUsing(new AssessmentTypeConverter(), src => src.AssessmentType))
+                .ForMember(dest => dest.DateCreated, opt => opt.ConvertUsing(new DateTimeConverter(), src => src.DateCreated));
 
             CreateMap<Assessment, AssessmentsResponse>()
                 .ForMember(dest => dest.AssessmentType, opt => opt.ConvertUsing(new AssessmentTypeConverter(), src => src.AssessmentType))
-                .ForMember(dest => dest.RecentGrade, opt => opt.MapFrom<AssessmentGradeResolver<Assessment, AssessmentsResponse>>());
+                .ForMember(dest => dest.RecentGrade, opt => opt.MapFrom<AssessmentGradeResolver<Assessment, AssessmentsResponse>>())
+                .ForMember(dest => dest.DateCreated, opt => opt.ConvertUsing(new DateTimeConverter(), src => src.DateCreated));
 
             CreateMap<AssessmentSubmission, AssessmentAttemptsResponse>()
                 .ForMember(dest => dest.TimeSubmitted, opt => opt.MapFrom(src => src.DateCreated))
@@ -45,7 +47,8 @@ namespace QuestionGenerator.Core.Application.AutoMapper.Profiles
 
             CreateMap<Document, DocumentResponse>();
 
-            CreateMap<Document, DocumentsResponse>();
+            CreateMap<Document, DocumentsResponse>()
+                .ForMember(dest => dest.DateCreated, opt => opt.ConvertUsing(new DateTimeConverter(), src => src.DateCreated));
 
             CreateMap<User, UserResponse>()
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FirstName + " " + src.LastName))

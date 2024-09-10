@@ -1,25 +1,22 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using OpenAI_API;
-using OpenAI_API.Completions;
 using QuestionGenerator.Core.Application.Config;
 using QuestionGenerator.Core.Application.Exceptions;
 using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Application.Interfaces.Services;
 using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Core.Domain.Enums;
+using QuestionGenerator.Infrastructure.Services;
 using QuestionGenerator.Models;
 using QuestionGenerator.Models.DocumentModel;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace QuestionGenerator.Core.Application.Services
 {
     public class DocumentService : IDocumentService
     {
-        private readonly OpenAiConfig _openAiConfig;
         private readonly StorageConfig _storageConfig;
+        private readonly CohereService _cohereService;
         private readonly IDocumentRepository _documentRepository;
         private readonly IUserRepository _userRepository;
         private readonly IFileRepository _fileRepository;
@@ -27,9 +24,8 @@ namespace QuestionGenerator.Core.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public DocumentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IDocumentRepository documentRepository, IUserRepository userRepository, IHttpContextAccessor httpContextAccessor, IUnitOfWork unitOfWork, IMapper mapper, IFileRepository fileRepository)
+        public DocumentService(IOptions<StorageConfig> storageConfig, IDocumentRepository documentRepository, IUserRepository userRepository, IHttpContextAccessor httpContextAccessor, IUnitOfWork unitOfWork, IMapper mapper, IFileRepository fileRepository, CohereService cohereService)
         {
-            _openAiConfig = openAiConfig.Value;
             _storageConfig = storageConfig.Value;
             _documentRepository = documentRepository;
             _userRepository = userRepository;
@@ -37,12 +33,13 @@ namespace QuestionGenerator.Core.Application.Services
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _fileRepository = fileRepository;
+            _cohereService = cohereService;
         }
 
         public async Task<BaseResponse> CreateDocument(DocumentRequest request)
         {
-            var userId = _httpContextAccessor.HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            var loginUserId = int.Parse(userId ?? "0");
+            var userId = _httpContextAccessor.HttpContext.User.FindFirst(x => x.Type == JwtRegisteredClaimNames.Sub);
+            var loginUserId = int.Parse(userId == null ? "0" : userId.Value);
             var user = await _userRepository.GetAsync(loginUserId) ?? throw new UnAuthenticatedUserException();
 
             var documentExists = await _documentRepository.ExistsAsync(loginUserId, request.Title);
@@ -102,37 +99,37 @@ namespace QuestionGenerator.Core.Application.Services
                     throw new InvalidUserRoleException();
             }
 
-            var documentUrl = await _fileRepository.UploadAsync(request.Document);
-            var documentContent = File.ReadAllLines($"{_storageConfig.Path}\\Documents\\{documentUrl}");
-            var prompt = GetPrompt(documentContent);
-
-            var openApi = new OpenAIAPI(_openAiConfig.ApiKey);
-            var completionRequest = new CompletionRequest
+            try
             {
-                Prompt = prompt,
-                MaxTokens = 500
-            };
+                var documentUrl = await _fileRepository.UploadAsync(request.Document);
+                var documentContent = File.ReadAllLines($"{_storageConfig.Path}\\Documents\\{documentUrl}");
+                var prompt = GetPrompt(documentContent);
 
-            var result = await openApi.Completions.CreateCompletionAsync(completionRequest);
+                var response = await _cohereService.GenerateAsync(prompt);
 
-            var document = new Document
+                var document = new Document
+                {
+                    Title = request.Title,
+                    CreatedBy = loginUserId.ToString(),
+                    DateCreated = DateTime.UtcNow,
+                    DocumentUrl = documentUrl,
+                    UserId = user.Id,
+                    TableOfContentsJson = response ?? throw new Exception()
+                };
+
+                await _documentRepository.AddAsync(document);
+                await _unitOfWork.SaveAsync();
+
+                return new BaseResponse
+                {
+                    Message = $"{document.Id}",
+                    Status = true
+                };
+            }
+            catch (Exception)
             {
-                Title = request.Title,
-                CreatedBy = loginUserId.ToString(),
-                DateCreated = DateTime.UtcNow,
-                DocumentUrl = documentUrl,
-                UserId = user.Id,
-                TableOfContentsJson = result.Completions[0].Text
-            };
-
-            await _documentRepository.AddAsync(document);
-            await _unitOfWork.SaveAsync();
-
-            return new BaseResponse
-            {
-                Message = "Document uploaded successfully",
-                Status = true
-            };
+                throw new Exception();
+            }
         }
 
         public async Task<BaseResponse> DeleteDocument(int id)
@@ -231,7 +228,7 @@ namespace QuestionGenerator.Core.Application.Services
         private static string GetPrompt(string[] documentContent)
         {
             return "Please generate a JSON list of strings representing the table of contents or chapters or headings of the following document:\r\n\r\n" +
-                $"---\r\n{documentContent}\r\n---\r\n\r\n" +
+                $"---\r\n{string.Join("\r\n", documentContent)}\r\n---\r\n\r\n" +
                 "The output should be a JSON array, where each string represents a chapter or heading from the document. " +
                 "The JSON should be formatted as follows:\r\n" +
                 @"[ 'Chapter 1: Introduction',

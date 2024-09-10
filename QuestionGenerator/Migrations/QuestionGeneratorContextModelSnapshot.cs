@@ -305,11 +305,19 @@ namespace QuestionGenerator.Migrations
                             CreatedBy = "1",
                             DateCreated = new DateTime(2024, 6, 27, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsDeleted = false,
-                            Name = "Free User"
+                            Name = "Basic User"
                         },
                         new
                         {
                             Id = 2,
+                            CreatedBy = "1",
+                            DateCreated = new DateTime(2024, 6, 27, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            Name = "Standard User"
+                        },
+                        new
+                        {
+                            Id = 3,
                             CreatedBy = "1",
                             DateCreated = new DateTime(2024, 6, 27, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsDeleted = false,

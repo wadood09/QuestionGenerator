@@ -146,14 +146,14 @@ namespace QuestionGenerator.Core.Application.Services
         {
             try
             {
-                var resetLink = $"http://localhost:5500/reset-password?token={resetToken}";
+                var resetLink = $"http://127.0.0.1:5500/ResetPassword/resetPassword.html?token={resetToken}";
 
                 var emailData = new
                 {
                     sender = new
                     {
                         name = "Question Generator",
-                        email = "wadoodenterprises09@gmail.com"
+                        email = "wadoodolaniyi@gmail.com"
                     },
                     to = new[]
                     {

@@ -63,7 +63,7 @@ namespace QuestionGenerator.Infrastructure.Context
             modelBuilder.Entity<Role>().HasData(
                 new Role { CreatedBy = "1", DateCreated = new DateTime(2024, 6, 27), Id = 1, Name = "Basic User" },
                 new Role { CreatedBy = "1", DateCreated = new DateTime(2024, 6, 27), Id = 2, Name = "Standard User" },
-                new Role { CreatedBy = "1", DateCreated = new DateTime(2024, 6, 27), Id = 2, Name = "Premium User" }
+                new Role { CreatedBy = "1", DateCreated = new DateTime(2024, 6, 27), Id = 3, Name = "Premium User" }
                 );
 
         }

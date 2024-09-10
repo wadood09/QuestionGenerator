@@ -8,6 +8,8 @@ using QuestionGenerator.Core.Application.Interfaces.Repositories;
 using QuestionGenerator.Core.Application.Interfaces.Services;
 using QuestionGenerator.Core.Domain.Entities;
 using QuestionGenerator.Core.Domain.Enums;
+using QuestionGenerator.Extensions;
+using QuestionGenerator.Infrastructure.Services;
 using QuestionGenerator.Models;
 using QuestionGenerator.Models.AssessmentModel;
 using System.IdentityModel.Tokens.Jwt;
@@ -18,8 +20,8 @@ namespace QuestionGenerator.Core.Application.Services
 {
     public class AssessmentService : IAssessmentService
     {
-        private readonly OpenAiConfig _openAiConfig;
         private readonly StorageConfig _storageConfig;
+        private readonly CohereService _cohereService;
         private readonly IAssessmentRepository _assessmentRepository;
         private readonly IQuestionRepository _questionRepository;
         private readonly IOptionRepository _optionRepository;
@@ -29,9 +31,8 @@ namespace QuestionGenerator.Core.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public AssessmentService(IOptions<OpenAiConfig> openAiConfig, IOptions<StorageConfig> storageConfig, IAssessmentRepository assessmentRepository, IUnitOfWork unitOfWork, IDocumentRepository documentRepository, IOptionRepository optionRepository, IQuestionRepository questionRepository, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IMapper mapper)
+        public AssessmentService(IOptions<StorageConfig> storageConfig, IAssessmentRepository assessmentRepository, IUnitOfWork unitOfWork, IDocumentRepository documentRepository, IOptionRepository optionRepository, IQuestionRepository questionRepository, IHttpContextAccessor httpContextAccessor, IUserRepository userRepository, IMapper mapper, CohereService cohereService)
         {
-            _openAiConfig = openAiConfig.Value;
             _storageConfig = storageConfig.Value;
             _assessmentRepository = assessmentRepository;
             _unitOfWork = unitOfWork;
@@ -41,6 +42,7 @@ namespace QuestionGenerator.Core.Application.Services
             _httpContextAccessor = httpContextAccessor;
             _userRepository = userRepository;
             _mapper = mapper;
+            _cohereService = cohereService;
         }
 
         public async Task<BaseResponse<AssessmentResponse>> TakeAssessment(int documentId, AssessmentRequest request)
@@ -73,18 +75,18 @@ namespace QuestionGenerator.Core.Application.Services
                 {
                     throw new AdvancedPreferencesNotAllowedException();
                 }
-                if (request.AssessmentType != AssessmentType.MultipleChoice)
+                if (request.AssessmentType != (int)AssessmentType.MultipleChoice)
                 {
                     throw new UnsupportedAssessmentTypeException(UserType.Basic);
                 }
-                if (request.DifficultyLevel != DifficultyLevel.Easy)
+                if (request.DifficultyLevel != (int)DifficultyLevel.Easy)
                 {
                     throw new InvalidDifficultyLevelException(UserType.Basic);
                 }
             }
             else if (user.Role.Name == "Standard User")
             {
-                if (request.QuestionCount > 50)
+                if (request.QuestionCount > 20)
                 {
                     throw new MaxQuestionCountExceededException(UserType.Standard);
                 }
@@ -96,44 +98,38 @@ namespace QuestionGenerator.Core.Application.Services
                 {
                     throw new AdvancedPreferencesNotAllowedException();
                 }
-                if (request.AssessmentType != AssessmentType.MultipleChoice && request.AssessmentType != AssessmentType.TrueFalse)
+                if (request.AssessmentType != (int)AssessmentType.MultipleChoice && request.AssessmentType != (int)AssessmentType.TrueFalse)
                 {
                     throw new UnsupportedAssessmentTypeException(UserType.Standard);
                 }
-                if (request.DifficultyLevel == DifficultyLevel.Hard)
+                if (request.DifficultyLevel == (int)DifficultyLevel.Hard)
                 {
                     throw new InvalidDifficultyLevelException(UserType.Standard);
                 }
             }
             else
             {
-                if (request.QuestionCount > 75)
+                if (request.QuestionCount > 50)
                 {
                     throw new MaxQuestionCountExceededException(UserType.Premium);
                 }
             }
 
 
-            var openApi = new OpenAIAPI(_openAiConfig.ApiKey);
             var documentContent = File.ReadAllLines($"{_storageConfig.Path}\\Documents\\{document.DocumentUrl}");
-            var prompt = GetPrompt(request.AssessmentType, request.QuestionCount, documentContent, request.DifficultyLevel, request.Prefences, request.AdvancedPrefences);
-            var completionRequest = new CompletionRequest
-            {
-                Prompt = prompt,
-                MaxTokens = 1000
-            };
+            var prompt = GetPrompt((AssessmentType)request.AssessmentType, request.QuestionCount, documentContent, (DifficultyLevel)request.DifficultyLevel, request.Prefences, request.AdvancedPrefences);
+            var response = await _cohereService.GenerateAsync(prompt);
 
-            var result = await openApi.Completions.CreateCompletionAsync(completionRequest);
             var assessment = new Assessment
             {
-                AssessmentType = request.AssessmentType,
+                AssessmentType = (AssessmentType)request.AssessmentType,
                 CreatedBy = loginUserId,
                 DateCreated = DateTime.UtcNow,
                 DocumentId = documentId,
                 UserId = user.Id,
             };
 
-            var questionsAndOptions = GetQuestionsAndOptions(request.AssessmentType, result, assessment, loginUserId);
+            var questionsAndOptions = GetQuestionsAndOptions((AssessmentType)request.AssessmentType, response, assessment, loginUserId);
 
             await _assessmentRepository.AddAsync(assessment);
             await _questionRepository.AddRangeAsync(questionsAndOptions.Item1);
@@ -235,13 +231,13 @@ namespace QuestionGenerator.Core.Application.Services
             };
         }
 
-        private (List<Question>, List<Domain.Entities.Option>) GetQuestionsAndOptions(AssessmentType type, CompletionResult result, Assessment assessment, string loginUserId)
+        private (List<Question>, List<Domain.Entities.Option>) GetQuestionsAndOptions(AssessmentType type, string result, Assessment assessment, string loginUserId)
         {
             var questions = new List<Question>();
             var options = new List<Domain.Entities.Option>();
             if (type == AssessmentType.MultipleChoice)
             {
-                var parsedResult = ParsePromptResultToJsonClass<MultipleChoice>(result.Completions[0].Text);
+                var parsedResult = ParsePromptResultToJsonClass<MultipleChoice>(result);
                 foreach (var item in parsedResult)
                 {
                     var question = new Question
@@ -269,7 +265,7 @@ namespace QuestionGenerator.Core.Application.Services
             }
             else if (type == AssessmentType.TrueFalse)
             {
-                var parsedResult = ParsePromptResultToJsonClass<TrueFalse>(result.Completions[0].Text);
+                var parsedResult = ParsePromptResultToJsonClass<TrueFalse>(result);
                 foreach (var item in parsedResult)
                 {
                     var question = new Question
@@ -287,7 +283,7 @@ namespace QuestionGenerator.Core.Application.Services
             }
             else if (type == AssessmentType.FillInTheBlanks)
             {
-                var parsedResult = ParsePromptResultToJsonClass<FillInTheBlanks>(result.Completions[0].Text);
+                var parsedResult = ParsePromptResultToJsonClass<FillInTheBlanks>(result);
                 foreach (var item in parsedResult)
                 {
                     var question = new Question
@@ -304,7 +300,7 @@ namespace QuestionGenerator.Core.Application.Services
             }
             else
             {
-                var parsedResult = ParsePromptResultToJsonClass<Flashcard>(result.Completions[0].Text);
+                var parsedResult = ParsePromptResultToJsonClass<Flashcard>(result);
                 foreach (var item in parsedResult)
                 {
                     var question = new Question
@@ -323,9 +319,9 @@ namespace QuestionGenerator.Core.Application.Services
             return (questions, options);
         }
 
-        private List<T> ParsePromptResultToJsonClass<T>(string result)
+        private static List<T> ParsePromptResultToJsonClass<T>(string result)
         {
-            var promptResult = JsonSerializer.Deserialize<List<T>>(result);
+            var promptResult = result.ExtractJson<List<T>>();
             return promptResult;
         }
 
@@ -337,9 +333,9 @@ namespace QuestionGenerator.Core.Application.Services
             if (type == AssessmentType.MultipleChoice)
             {
                 var firstPart = $"Generate {count} multiple-choice questions in JSON format based on the following document:" +
-                    $"\n\n{documentContent}" +
+                    $"\n\n{string.Join("\r\n", documentContent)}" +
                     $"\n\n Each question should have a question text, four options, the correct answer, and an elucidation. ";
-                var lastPart = $"\n\n The difficulty level should be {difficultyLevel}" +
+                var lastPart = $"\n\n The difficulty level should be {difficultyLevel}. " +
                     $"The JSON structure should be as follows:" +
                     @"{
                             'question': 'What is the capital of Japan?',
@@ -352,9 +348,9 @@ namespace QuestionGenerator.Core.Application.Services
             else if (type == AssessmentType.TrueFalse)
             {
                 var firstPart = $"Generate {count} true or false questions in JSON format based on the following document:" +
-                    $"\n\n{documentContent} " +
+                    $"\n\n{string.Join("\r\n", documentContent)} " +
                     $"Each question should have a statement, a boolean value indicating the correct answer, and an explanation. ";
-                var lastPart = $"\n\n The difficulty level should be {difficultyLevel}" +
+                var lastPart = $"\n\n The difficulty level should be {difficultyLevel}. " +
                     $"The JSON structure should be as follows:" +
                     @"{
                            'statement': 'Tokyo is the capital of Japan.',
@@ -366,9 +362,9 @@ namespace QuestionGenerator.Core.Application.Services
             else if (type == AssessmentType.FillInTheBlanks)
             {
                 var firstPart = $"Generate {count} fill-in-the-gaps questions in JSON format based on the following document:" +
-                    $"\n\n{documentContent}" +
+                    $"\n\n{string.Join("\r\n", documentContent)}" +
                     $"\n\n Each question should have a sentence with a blank and the correct answer. ";
-                var lastPart = $"\n\n The difficulty level should be {difficultyLevel}" +
+                var lastPart = $"\n\n The difficulty level should be {difficultyLevel}. " +
                     $"The JSON structure should be as follows:" +
                     @"{
                             'sentence': 'Tokyo is the capital of ____.',
@@ -379,9 +375,9 @@ namespace QuestionGenerator.Core.Application.Services
             else
             {
                 var firstPart = $"Generate {count} flashcards in JSON format based on the following document:" +
-                    $"\n\n{documentContent}" +
+                    $"\n\n{string.Join("\r\n", documentContent)}" +
                     $"\n\n Each flashcard should have a question, an answer, and an elucidation. ";
-                var lastPart = $"\n\n The difficulty level should be {difficultyLevel}" +
+                var lastPart = $"\n\n The difficulty level should be {difficultyLevel}. " +
                     $"The JSON structure should be as follows:" +
                     @"{
                             'question': 'What is the capital of Japan?',

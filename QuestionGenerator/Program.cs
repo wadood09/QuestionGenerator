@@ -4,6 +4,8 @@ using Microsoft.OpenApi.Models;
 using PayStack.Net;
 using QuestionGenerator.Core.Application.Config;
 using QuestionGenerator.Extensions;
+using QuestionGenerator.Infrastructure.Services;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -48,11 +50,16 @@ builder.Services.AddCors(cors =>
 {
     cors.AddPolicy("question_Generator", pol =>
     {
-        pol.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        pol.WithOrigins("http://127.0.0.1:5500")
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
     });
 });
 
 builder.Services.AddContext(builder.Configuration.GetConnectionString("QuestionGenString")!);
+
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -71,9 +78,17 @@ builder.Services.AddAuthentication(options =>
                 ValidAudience = builder.Configuration["Jwt:Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
             };
+            options.MapInboundClaims = false;
         });
 
 builder.Services.AddHttpClient();
+
+builder.Services.AddHttpClient("CohereApi", client =>
+{
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", builder.Configuration["Cohere:ApiKey"]);
+    client.Timeout = TimeSpan.FromSeconds(100);
+    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+});
 
 builder.Services.AddHttpClient("BrevoApi", client =>
 {
@@ -103,6 +118,8 @@ builder.Services.AddScoped(provider =>
     var paystackSecretKey = builder.Configuration["Paystack:ApiSecretKey"];
     return new PayStackApi(paystackSecretKey);
 });
+
+builder.Services.AddSingleton<CohereService>();
 
 builder.Services.Configure<StorageConfig>(builder.Configuration.GetSection("FileStorage"));
 

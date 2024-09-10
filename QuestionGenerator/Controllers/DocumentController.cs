@@ -26,8 +26,8 @@ namespace QuestionGenerator.Controllers
         {
             try
             {
-                await _documentService.CreateDocument(request);
-                return Ok(new { message = "Document uploaded successfully" });
+                var document = await _documentService.CreateDocument(request);
+                return Ok(new { message = "Document uploaded successfully", id = document.Message});
             }
             catch (UnAuthenticatedUserException ex)
             {

@@ -24,6 +24,7 @@ namespace QuestionGenerator.Infrastructure.Repositories
         public async Task<ICollection<Assessment>> GetAllAsync(Expression<Func<Assessment, bool>> exp)
         {
             var assessments = await _context.Assessments
+                .Include(x => x.Questions)
                 .Include(x => x.AssessmentSubmissions)
                 .ThenInclude(x => x.Results)
                 .ThenInclude(x => x.Question)
@@ -61,9 +62,10 @@ namespace QuestionGenerator.Infrastructure.Repositories
 
         public async Task<int> GetAssessmentsTakenThisMonth(int userId)
         {
+            var now = DateTime.Now;
             var count = await _context.Assessments.CountAsync(x => x.UserId == userId &&
-                     x.DateCreated.Year == DateTime.Now.Year &&
-                     x.DateCreated.Month == DateTime.Now.Month);
+                     x.DateCreated.Year == now.Year &&
+                     x.DateCreated.Month == now.Month);
             return count;
         }
 

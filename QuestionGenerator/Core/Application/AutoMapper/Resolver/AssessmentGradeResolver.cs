@@ -13,6 +13,7 @@ namespace QuestionGenerator.Core.Application.AutoMapper.Resolver
             if (source is Assessment assessment)
             {
                 var latestSubmission = assessment.AssessmentSubmissions.Count != 0 ? assessment.AssessmentSubmissions.OrderByDescending(r => r.DateCreated).First() : null;
+                if (latestSubmission == null) return null;
                 return CalculateGrade(latestSubmission);
             }
             else if(source is AssessmentSubmission assesment)

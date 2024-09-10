@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using QuestionGenerator.Extensions;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 
 namespace QuestionGenerator.Core.Domain.Entities
@@ -13,7 +14,7 @@ namespace QuestionGenerator.Core.Domain.Entities
         [NotMapped]
         public List<string> TableOfContents
         {
-            get => string.IsNullOrEmpty(TableOfContentsJson) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(TableOfContentsJson);
+            get => string.IsNullOrEmpty(TableOfContentsJson) ? new List<string>() : TableOfContentsJson.ExtractJson<List<string>>();
             set => TableOfContentsJson = JsonSerializer.Serialize(value);
         }
 

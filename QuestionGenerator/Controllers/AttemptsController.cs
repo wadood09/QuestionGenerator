@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using QuestionGenerator.Core.Application.Exceptions;
 using QuestionGenerator.Core.Application.Interfaces.Services;
@@ -7,7 +6,7 @@ using QuestionGenerator.Models.AssessmentSubmissionModel;
 
 namespace QuestionGenerator.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/attempts")]
     [ApiController]
     [Authorize]
     public class AttemptsController : ControllerBase
@@ -28,7 +27,7 @@ namespace QuestionGenerator.Controllers
                 if (!submission.Status)
                     return NotFound(new { message = submission.Message });
 
-                return Ok(new { message = submission.Message });
+                return Ok(new { message = "Assessment submission successfull", id = submission.Message });
             }
             catch (UnAuthenticatedUserException ex)
             {

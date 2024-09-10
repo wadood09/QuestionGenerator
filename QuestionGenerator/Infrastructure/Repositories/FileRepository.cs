@@ -22,42 +22,52 @@ namespace QuestionGenerator.Infrastructure.Repositories
                 return null;
             }
 
-            var a = file.ContentType.Split('/');
-            var newName = $"{a[0]}{Guid.NewGuid().ToString("N").Substring(0, 6)}.{a[1]}";
+            var allowedImageExtensions = new HashSet<string> { ".jpg", ".jpeg", ".png", ".gif", ".tif", ".tiff", ".bmp", ".webp", ".svg", ".ico", ".jfif" };
+            var allowedDocumentExtensions = new HashSet<string> { ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".txt" };
 
-            var b = _config.Path;
-            if (!Directory.Exists(b))
+            var extension = Path.GetExtension(file.FileName).ToLower();
+
+            if (!allowedImageExtensions.Contains(extension) && !allowedDocumentExtensions.Contains(extension))
             {
-                Directory.CreateDirectory(b);
+                throw new Exception("Unsupported file type.");
             }
-            string c;
-            string[] imageExtensions = ["jpg", "jpeg", "png", "gif", "tif", "tiff", "bmp", "webp", "svg", "ico", "jfif"];
-            if (imageExtensions.Contains(a[1]))
+
+            var newFileName = $"{Guid.NewGuid().ToString("N").Substring(0, 6)}" + $".{extension}";
+
+            var basePath = _config.Path;
+            if (!Directory.Exists(basePath))
             {
-                var images = Path.Combine(b, "Images");
-                if(!File.Exists(images))
+                Directory.CreateDirectory(basePath);
+            }
+
+            string savePath;
+            if (allowedImageExtensions.Contains(extension))
+            {
+                var imagesPath = Path.Combine(basePath, "Images");
+                if (!Directory.Exists(imagesPath))
                 {
-                    File.Create(images);
+                    Directory.CreateDirectory(imagesPath);
                 }
-                c = Path.Combine(images, newName);
+                savePath = Path.Combine(imagesPath, newFileName);
             }
             else
             {
-                var document = Path.Combine(b, "Documents");
-                if (!File.Exists(document))
+                var documentsPath = Path.Combine(basePath, "Documents");
+                if (!Directory.Exists(documentsPath))
                 {
-                    File.Create(document);
+                    Directory.CreateDirectory(documentsPath);
                 }
-                c = Path.Combine(document, newName);
+                savePath = Path.Combine(documentsPath, newFileName);
             }
 
-            using (var d = new FileStream(c, FileMode.Create))
+            using (var stream = new FileStream(savePath, FileMode.Create))
             {
-                await file.CopyToAsync(d);
+                await file.CopyToAsync(stream);
             }
 
-            return newName;
+            return newFileName;
         }
+
 
         public async Task<string?> SaveProfilePictureAsync(string imageUrl)
         {

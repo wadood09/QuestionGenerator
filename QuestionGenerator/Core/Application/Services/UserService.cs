@@ -51,7 +51,7 @@ namespace QuestionGenerator.Core.Application.Services
                 };
             }
 
-            var role = await _roleRepository.GetAsync(x => x.Name.Equals("Free User"));
+            var role = await _roleRepository.GetAsync(x => x.Name.Equals("Basic User"));
             if (role == null)
             {
                 return new BaseResponse
